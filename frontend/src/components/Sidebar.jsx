@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/userSlice";
 import EditUserDetails from "./EditUser";
 import SearchUser from "./SearchUser";
+import Loading from "./Loading";
 
 const Sidebar = () => {
   const user = useSelector((state) => state?.user);
@@ -127,8 +128,8 @@ const Sidebar = () => {
               </p>
             </div>
           )}
-
-          {allUser.map((conv, index) => {
+        
+          { allUser?.map((conv, index) => {
             return (
               <NavLink
                 to={"/" + conv?.userDetails?._id}
@@ -155,14 +156,6 @@ const Sidebar = () => {
                             <FaImage />
                           </span>
                           {!conv?.lastMsg?.text && <span>Image</span>}
-                        </div>
-                      )}
-                      {conv?.lastMsg?.videoUrl && (
-                        <div className="flex items-center gap-1">
-                          <span>
-                            <FaVideo />
-                          </span>
-                          {!conv?.lastMsg?.text && <span>Video</span>}
                         </div>
                       )}
                     </div>
