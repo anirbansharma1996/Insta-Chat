@@ -73,29 +73,7 @@ const MessagePage = () => {
     });
   };
 
-  // const handleUploadVideo = async (e) => {
-  //   const file = e.target.files[0];
-
-  //   setLoading(true);
-  //   const uploadPhoto = await uploadFile(file);
-  //   setLoading(false);
-  //   setOpenImageVideoUpload(false);
-
-  //   setMessage((preve) => {
-  //     return {
-  //       ...preve,
-  //       videoUrl: uploadPhoto.url,
-  //     };
-  //   });
-  // };
-  // const handleClearUploadVideo = () => {
-  //   setMessage((preve) => {
-  //     return {
-  //       ...preve,
-  //       videoUrl: "",
-  //     };
-  //   });
-  // };
+  
 
   useEffect(() => {
     if (socketConnection) {
