@@ -1,0 +1,51 @@
+const { Schema, model, default: mongoose } = require("mongoose");
+
+const MessageSchema = new Schema(
+  {
+    text: {
+      type: String,
+      default: "",
+    },
+    imageUrl: {
+      type: String,
+      default: "",
+    },
+    seen: {
+      type: Boolean,
+      default: false,
+    },
+    msgByUserId: {
+      type: mongoose.Schema.ObjectId,
+      required: true,
+      ref: "users",
+    },
+  },
+  { timestamps: true }
+);
+
+const ConvserSationSchema = new Schema(
+  {
+    sender: {
+      type: mongoose.Schema.ObjectId,
+      required: true,
+      ref: "users",
+    },
+    receiver: {
+      type: mongoose.Schema.ObjectId,
+      required: true,
+      ref: "users",
+    },
+    messages: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "messages",
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+const Message = new model("messages", MessageSchema);
+const Conversation = new model("conversation", ConvserSationSchema);
+
+module.exports = { Message, Conversation };
