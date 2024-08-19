@@ -44,7 +44,7 @@ const CheckEmail = () => {
           <PiUserCircle size={80} />
         </div>
 
-        <h3>Welcome to Chat app!</h3>
+        <h3>Welcome to Insta Chat !</h3>
 
         <form className="grid gap-4 mt-3" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1">

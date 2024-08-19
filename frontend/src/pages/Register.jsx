@@ -43,7 +43,7 @@ const Register = () => {
   return (
     <div className="m-auto mt-5 w-80">
       <div className="bg-white w-full mx-w-md rounded overflow-hidden p-4 mx- auto">
-        <h3 className="text-center">Chat App</h3>
+        <h3 className="text-center">Insta Chat</h3>
         <form className="grid gap-4 mt-5" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1">
             <label htmlFor="name">name</label>
