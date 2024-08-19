@@ -1,10 +1,10 @@
-# Chat App
+# Insta Chat
 
 ![Chat App Banner](chat-app.png)
 
 ## Description
 
-The Chat App is a real-time messaging platform that allows users to sign up and connect with strangers for one-on-one conversations. The app is designed to provide a seamless and intuitive user experience, enabling users to exchange text messages and share images effortlessly.
+The Insta Chat is a real-time messaging platform that allows users to sign up and connect with strangers for one-on-one conversations. The app is designed to provide a seamless and intuitive user experience, enabling users to exchange text messages and share images effortlessly.
 
 ### Key Features
 
