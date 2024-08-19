@@ -40,7 +40,7 @@ const Home = () => {
 
   // socket connection
   useEffect(() => {
-    const socketConnection = io("http://127.0.0.1:8080/", {
+    const socketConnection = io("https://chat-app-backend-449e.onrender.com/", {
       auth: {
         token: tk,
       },
