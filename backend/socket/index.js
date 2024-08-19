@@ -32,9 +32,8 @@ io.on("connection", async (socket) => {
 
   //current user details
   const user = await getUserDetailsFromToken(token);
-
-  //create a room
-  socket.join(user?._id.toString());
+//create a room
+  socket.join(user?._id?.toString());
   onlineUser.add(user?._id?.toString());
 
   io.emit("onlineUser", Array.from(onlineUser));
