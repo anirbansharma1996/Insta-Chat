@@ -202,7 +202,7 @@ const MessagePage = () => {
               {dataUser?.name}
             </h3>
             <p className="-my-2 text-sm">
-              {dataUser?.online ? (
+              {dataUser.online ? (
                 <span className="text-primary">online</span>
               ) : (
                 <span className="text-slate-400">offline</span>
