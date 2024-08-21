@@ -40,7 +40,7 @@ const MessagePage = () => {
   const [loading, setLoading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
   const [editingMessageId, setEditingMessageId] = useState(null);
-  const [deleteMessageId, setDeleteMessageId] = useState(null);
+  //const [deleteMessageId, setDeleteMessageId] = useState(null);
   const [activeMessageId, setActiveMessageId] = useState(null);
   const currentMessage = useRef(null);
 
@@ -97,11 +97,11 @@ const MessagePage = () => {
       socketConnection.on("message", (data) => {
         setAllMessage(data);
       });
-      socketConnection.on("delete-message", () => {
-        setAllMessage((prevMessages) =>
-          prevMessages.filter((msg) => msg._id !== deleteMessageId)
-        );
-      });
+      // socketConnection.on("delete-message", () => {
+      //   setAllMessage((prevMessages) =>
+      //     prevMessages.filter((msg) => msg._id !== deleteMessageId)
+      //   );
+      // });
     }
   }, [socketConnection, params?.userId, user , isLoading]);
 
@@ -155,26 +155,26 @@ const MessagePage = () => {
     setEditingMessageId(el._id);
   };
 
-  const handleDeleteText = async (id) => {
-    setDeleteMessageId(id);
-    setIsLoading(true);
-    try {
-      const res = await axios.delete(
-        `${REACT_APP_BACKEND_URL}/delete-message/${id}`,
-        {
-          headers: { Authorization: tk },
-        }
-      );
-      setIsLoading(false);
-      if (res.status === 200) {
-        socketConnection.emit("delete-message", id);
-        setDeleteMessageId(null);
-      }
-    } catch (error) {
-      setIsLoading(false);
-      console.log(error);
-    }
-  };
+  // const handleDeleteText = async (id) => {
+  //   setDeleteMessageId(id);
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await axios.delete(
+  //       `${REACT_APP_BACKEND_URL}/delete-message/${id}`,
+  //       {
+  //         headers: { Authorization: tk },
+  //       }
+  //     );
+  //     setIsLoading(false);
+  //     if (res.status === 200) {
+  //       socketConnection.emit("delete-message", id);
+  //       setDeleteMessageId(null);
+  //     }
+  //   } catch (error) {
+  //     setIsLoading(false);
+  //     console.log(error);
+  //   }
+  // };
 
   return (
     <div
@@ -202,7 +202,7 @@ const MessagePage = () => {
               {dataUser?.name}
             </h3>
             <p className="-my-2 text-sm">
-              {dataUser.online ? (
+              {dataUser?.online ? (
                 <span className="text-primary">online</span>
               ) : (
                 <span className="text-slate-400">offline</span>
@@ -269,9 +269,9 @@ const MessagePage = () => {
                         <div className="text-primary">
                           <MdModeEditOutline size={20} />
                         </div>
-                        <p>Edit</p>
+                        <p>Edit </p>
                       </label>
-                      <label
+                      {/* <label
                         htmlFor=""
                         onClick={() => handleDeleteText(msg._id)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
@@ -280,7 +280,7 @@ const MessagePage = () => {
                           <MdDeleteOutline size={20} />
                         </div>
                         <p>Delete</p>
-                      </label>
+                      </label> */}
                     </form>
                   </div>
                 )}

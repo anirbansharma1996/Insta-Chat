@@ -22,10 +22,6 @@ const Home = () => {
   const tk = localStorage.getItem("token");
   const URL = `${REACT_APP_BACKEND_URL}/user-details/${tk}`;
 
-  if (!tk) {
-    navigate("/email");
-  }
-
   const fetchUserDetails = async () => {
     try {
       const response = await axios({
@@ -44,12 +40,15 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchUserDetails();
+    if (!tk) {
+      navigate("/email");
+    } else {
+      fetchUserDetails();
+    }
   }, []);
 
-
-const IO_URL = "https://chat-app-backend-449e.onrender.com/"
-//const IO_URL = "http://127.0.0.1:8080"
+  const IO_URL = "https://chat-app-backend-449e.onrender.com/";
+  //const IO_URL = "http://127.0.0.1:8080"
 
   // socket connection
   useEffect(() => {

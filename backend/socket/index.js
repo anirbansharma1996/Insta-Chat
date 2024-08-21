@@ -178,39 +178,39 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // Delete message
-  socket.on("delete-message", async (messageId) => {
-    try {
-      const deletedMessage = await Message.findByIdAndDelete(messageId);
+  // // Delete message
+  // socket.on("delete-message", async (messageId) => {
+  //   try {
+  //     const deletedMessage = await Message.findByIdAndDelete(messageId);
   
-      if (deletedMessage) {
-        // Emit message deletion to both the sender and receiver
-        io.to(deletedMessage.msgByUserId.toString()).emit("delete-message", messageId);
+  //     if (deletedMessage) {
+  //       // Emit message deletion to both the sender and receiver
+  //       io.to(deletedMessage.msgByUserId.toString()).emit("delete-message", messageId);
         
-        // Get the conversation for both users
-        const conversation = await Conversation.findOne({
-          $or: [
-            { sender: deletedMessage.msgByUserId, receiver: deletedMessage.receiver },
-            { sender: deletedMessage.receiver, receiver: deletedMessage.msgByUserId },
-          ],
-        });
+  //       // Get the conversation for both users
+  //       const conversation = await Conversation.findOne({
+  //         $or: [
+  //           { sender: deletedMessage.msgByUserId, receiver: deletedMessage.receiver },
+  //           { sender: deletedMessage.receiver, receiver: deletedMessage.msgByUserId },
+  //         ],
+  //       });
   
-        // Remove the deleted message from the conversation
-        await Conversation.updateMany(
-          { _id: conversation._id },
-          { $pull: { messages: messageId } }
-        );
+  //       // Remove the deleted message from the conversation
+  //       await Conversation.updateMany(
+  //         { _id: conversation._id },
+  //         { $pull: { messages: messageId } }
+  //       );
   
-        // Emit updated conversation
-        io.to(deletedMessage.msgByUserId.toString()).emit("message", conversation.messages);
-        io.to(deletedMessage.receiver.toString()).emit("message", conversation.messages);
-      } else {
-        socket.emit("delete-failure", { error: "Message not found" });
-      }
-    } catch (error) {
-      socket.emit("delete-failure", { error: error.message });
-    }
-  });
+  //       // Emit updated conversation
+  //       io.to(deletedMessage.msgByUserId.toString()).emit("message", conversation.messages);
+  //       io.to(deletedMessage.receiver.toString()).emit("message", conversation.messages);
+  //     } else {
+  //       socket.emit("delete-failure", { error: "Message not found" });
+  //     }
+  //   } catch (error) {
+  //     socket.emit("delete-failure", { error: error.message });
+  //   }
+  // });
   
 
   // Disconnect
