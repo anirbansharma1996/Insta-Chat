@@ -182,28 +182,28 @@ io.on("connection", async (socket) => {
   socket.on("delete-message", async (messageId) => {
     try {
       const deletedMessage = await Message.findByIdAndDelete(messageId);
-      
+  
       if (deletedMessage) {
         // Emit message deletion to both the sender and receiver
-        io.emit("message-deleted", messageId);
-        // Optionally, update the conversation to remove the deleted message
+        io.to(deletedMessage.msgByUserId.toString()).emit("delete-message", messageId);
+        
+        // Get the conversation for both users
+        const conversation = await Conversation.findOne({
+          $or: [
+            { sender: deletedMessage.msgByUserId, receiver: deletedMessage.receiver },
+            { sender: deletedMessage.receiver, receiver: deletedMessage.msgByUserId },
+          ],
+        });
+  
+        // Remove the deleted message from the conversation
         await Conversation.updateMany(
-          { messages: messageId },
+          { _id: conversation._id },
           { $pull: { messages: messageId } }
         );
-
-        // Update the conversation list for both users
-        const conversationSender = await getConversation(deletedMessage.msgByUserId);
-        const otherUser =
-          (await Conversation.findOne({ messages: messageId })).sender.toString() ===
-          deletedMessage.msgByUserId.toString()
-            ? Conversation.receiver
-            : Conversation.sender;
-
-        const conversationReceiver = await getConversation(otherUser);
-
-        io.to(deletedMessage.msgByUserId.toString()).emit("conversation", conversationSender);
-        io.to(otherUser.toString()).emit("conversation", conversationReceiver);
+  
+        // Emit updated conversation
+        io.to(deletedMessage.msgByUserId.toString()).emit("message", conversation.messages);
+        io.to(deletedMessage.receiver.toString()).emit("message", conversation.messages);
       } else {
         socket.emit("delete-failure", { error: "Message not found" });
       }
@@ -211,6 +211,7 @@ io.on("connection", async (socket) => {
       socket.emit("delete-failure", { error: error.message });
     }
   });
+  
 
   // Disconnect
   socket.on("disconnect", () => {

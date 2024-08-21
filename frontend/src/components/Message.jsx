@@ -32,7 +32,7 @@ const MessagePage = () => {
     _id: "",
   });
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
-  const [openEditDelete, setOpenEditDelete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({
     text: "",
     imageUrl: "",
@@ -97,13 +97,13 @@ const MessagePage = () => {
       socketConnection.on("message", (data) => {
         setAllMessage(data);
       });
-      socketConnection.on("delete-message", (deleteMessageId) => {
+      socketConnection.on("delete-message", () => {
         setAllMessage((prevMessages) =>
           prevMessages.filter((msg) => msg._id !== deleteMessageId)
         );
       });
     }
-  }, [socketConnection, params?.userId, user,deleteMessageId]);
+  }, [socketConnection, params?.userId, user , isLoading]);
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -118,7 +118,7 @@ const MessagePage = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-  
+
     if (message.text || message.imageUrl) {
       if (socketConnection) {
         if (editingMessageId) {
@@ -157,6 +157,7 @@ const MessagePage = () => {
 
   const handleDeleteText = async (id) => {
     setDeleteMessageId(id);
+    setIsLoading(true);
     try {
       const res = await axios.delete(
         `${REACT_APP_BACKEND_URL}/delete-message/${id}`,
@@ -164,16 +165,16 @@ const MessagePage = () => {
           headers: { Authorization: tk },
         }
       );
+      setIsLoading(false);
       if (res.status === 200) {
         socketConnection.emit("delete-message", id);
-        //console.log(res.data);
+        setDeleteMessageId(null);
       }
     } catch (error) {
+      setIsLoading(false);
       console.log(error);
     }
   };
-
-
 
   return (
     <div
