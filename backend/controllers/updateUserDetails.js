@@ -7,18 +7,22 @@ async function updateUserDetails(req, res) {
     const user = await getUserDetailsFromToken(token);
     const { name, profile_pic } = req.body;
 
-    const updateUser = await User.updateOne(
+
+    const updateUser = await User.findOneAndUpdate(
       { _id: user._id },
       {
         name,
         profile_pic,
-      }
+      },
+      { new: true }
     );
 
     const userInfo = await User.findById(user._id);
+   
+
     return res.json({
       message: "user updated successfully",
-      data : userInfo,
+      data: userInfo,
       success: true,
     });
   } catch (error) {
@@ -29,4 +33,4 @@ async function updateUserDetails(req, res) {
   }
 }
 
-module.exports = updateUserDetails
+module.exports = updateUserDetails;

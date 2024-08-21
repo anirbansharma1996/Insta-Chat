@@ -6,6 +6,7 @@ import taost from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/userSlice";
 import { REACT_APP_BACKEND_URL } from "../../env";
+import CircularJSON from "circular-json";
 
 const EditUserDetails = ({ onClose, user }) => {
   const tk = localStorage.getItem("token");
@@ -13,7 +14,7 @@ const EditUserDetails = ({ onClose, user }) => {
     name: user?.user,
     profile_pic: user?.profile_pic,
   });
-  //const uploadPhotoRef = useRef()
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -36,35 +37,18 @@ const EditUserDetails = ({ onClose, user }) => {
     });
   };
 
-  // const handleOpenUploadPhoto = (e)=>{
-  //     e.preventDefault()
-  //     e.stopPropagation()
-
-  //     uploadPhotoRef.current.click()
-  // }
-  // const handleUploadPhoto = async(e)=>{
-  //     const file = e.target.files[0]
-
-  //     const uploadPhoto = await uploadFile(file)
-
-  //     setData((preve)=>{
-  //     return{
-  //         ...preve,
-  //         profile_pic : uploadPhoto?.url
-  //     }
-  //     })
-  // }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const safeData = CircularJSON.stringify(data);
+ 
     try {
       const URL = `${REACT_APP_BACKEND_URL}/update-user/${tk}`;
 
       const response = await axios({
         method: "post",
         url: URL,
-        data: data,
+        data: JSON.parse(safeData),
         withCredentials: true,
       });
 
@@ -97,28 +81,6 @@ const EditUserDetails = ({ onClose, user }) => {
               className="w-full py-1 px-2 focus:outline-primary border-0.5"
             />
           </div>
-
-          {/* <div>
-                    <div>Photo:</div>
-                    <div className='my-1 flex items-center gap-4'>
-                        <Avatar
-                            width={40}
-                            height={40}
-                            imageUrl={data?.profile_pic}
-                            name={data?.name}
-                        />
-                        <label htmlFor='profile_pic'>
-                        <button className='font-semibold' onClick={handleOpenUploadPhoto}>Change Photo</button>
-                        <input
-                            type='file'
-                            id='profile_pic'
-                            className='hidden'
-                            onChange={handleUploadPhoto}
-                            ref={uploadPhotoRef}
-                        />
-                        </label>
-                    </div>
-                </div> */}
 
           <Divider />
           <div className="flex gap-2 w-fit ml-auto ">

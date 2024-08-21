@@ -19,15 +19,14 @@ async function checkPassword(req, res) {
       id: user._id,
       email: user.email,
     };
-    const token = jwt.sign(tokenData, process.env.JWT_SECREAT_KEY, {
+    const token = jwt.sign(tokenData, process.env.JWT_SECRET_KEY, {
       expiresIn: "90d",
     });
 
     const cookieOptions = {
-      http : true,
-      secure : true
-  }
-
+      http: true,
+      secure: true,
+    };
 
     return res.cookie("token", token, cookieOptions).status(200).json({
       message: "Login successfully",

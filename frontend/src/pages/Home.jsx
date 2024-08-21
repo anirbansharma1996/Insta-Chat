@@ -47,9 +47,13 @@ const Home = () => {
     fetchUserDetails();
   }, []);
 
+
+const IO_URL = "https://chat-app-backend-449e.onrender.com/"
+//const IO_URL = "http://127.0.0.1:8080"
+
   // socket connection
   useEffect(() => {
-    const socketConnection = io("https://chat-app-backend-449e.onrender.com/", {
+    const socketConnection = io(IO_URL, {
       auth: {
         token: tk,
       },
