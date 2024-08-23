@@ -147,7 +147,6 @@ const MessagePage = () => {
         setAllMessage(data);
       });
       socketConnection.on("display", (data) => {
-        console.log(data)
         if (data.typing) {
           setIsTyping(true);
         } else {
