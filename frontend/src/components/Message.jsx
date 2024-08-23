@@ -283,7 +283,7 @@ const MessagePage = () => {
                 {!msg?.isDeleted ? (
                   <div className="flex items-center">
                     <p className="text-xs ml-auto w-fit">
-                      {moment(msg.createdAt).format("hh:mm")}
+                      {moment(msg.createdAt).format("hh:mm A")}
                     </p>
                     &nbsp;
                    {  user._id === msg?.msgByUserId && <p className="text-xs">

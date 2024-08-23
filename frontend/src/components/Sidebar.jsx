@@ -161,7 +161,7 @@ const Sidebar = () => {
                       {conv?.userDetails?.name} 
                     </h3>
                     <p className="text-xs line-clamp-1 ">
-                    {moment(conv?.lastMsg?.createdAt).format("hh:mm")}
+                    
                     </p>
                   </div>
                     <div className="text-slate-500 text-xs flex items-center gap-1">
@@ -177,11 +177,11 @@ const Sidebar = () => {
                       </div>
                       {Boolean(conv?.unseenMsg) ? (
                         <p className="text-ellipsis font-bold text-blue-400  line-clamp-1">
-                         {conv?.lastMsg?.text} (unread...) 
+                         {conv?.lastMsg?.text} (unread...) [ {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
                         </p>
                       ) : (
                         <p className="text-ellipsis line-clamp-1">
-                          {conv?.lastMsg?.text} 
+                          {conv?.lastMsg?.text} [ {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
                         </p>
                       )}
                     </div>
