@@ -3,7 +3,7 @@ import Avatar from "./Avatar";
 import { NavLink, useNavigate } from "react-router-dom";
 import { IoChatbubbleEllipses } from "react-icons/io5";
 import { FaUserPlus } from "react-icons/fa";
-import { FaImage, FaVideo } from "react-icons/fa6";
+import { FaImage } from "react-icons/fa6";
 import { FiArrowUpLeft } from "react-icons/fi";
 import { BiLogOut } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,54 +11,57 @@ import { logout } from "../redux/userSlice";
 import EditUserDetails from "./EditUser";
 import SearchUser from "./SearchUser";
 import Loading from "./Loading";
+import moment from "moment";
 
 const Sidebar = () => {
   const user = useSelector((state) => state?.user);
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [openSearchUser, setOpenSearchUser] = useState(false);
   const [allUser, setAllUser] = useState([]);
-  const socketConnection = useSelector(state => state?.user?.socketConnection)
+  const [isLoading, setIsLoading] = useState(false);
+  const socketConnection = useSelector(
+    (state) => state?.user?.socketConnection
+  );
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  useEffect(()=>{
-    if(socketConnection){
-        socketConnection.emit('sidebar',user._id)
-        
-        socketConnection.on('conversation',(data)=>{
- 
-            
-            const conversationUserData = data.map((conversationUser,index)=>{
-                if(conversationUser?.sender?._id === conversationUser?.receiver?._id){
-                    return{
-                        ...conversationUser,
-                        userDetails : conversationUser?.sender
-                    }
-                }
-                else if(conversationUser?.receiver?._id !== user?._id){
-                    return{
-                        ...conversationUser,
-                        userDetails : conversationUser.receiver
-                    }
-                }else{
-                    return{
-                        ...conversationUser,
-                        userDetails : conversationUser.sender
-                    }
-                }
-            })
+  useEffect(() => {
+    setIsLoading(true);
+    if (socketConnection) {
+      socketConnection.emit("sidebar", user._id);
+      socketConnection.on("conversation", (data) => {
+        const conversationUserData = data.map((conversationUser, index) => {
+          if (
+            conversationUser?.sender?._id === conversationUser?.receiver?._id
+          ) {
+            return {
+              ...conversationUser,
+              userDetails: conversationUser?.sender,
+            };
+          } else if (conversationUser?.receiver?._id !== user?._id) {
+            return {
+              ...conversationUser,
+              userDetails: conversationUser.receiver,
+            };
+          } else {
+            return {
+              ...conversationUser,
+              userDetails: conversationUser.sender,
+            };
+          }
+        });
 
-            setAllUser(conversationUserData)
-        })
+        setAllUser(conversationUserData);
+        setIsLoading(false);
+      });
     }
-},[socketConnection,user])
+  }, [socketConnection, user]);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/email");
     localStorage.removeItem("token");
   };
-
 
 
   return (
@@ -118,7 +121,13 @@ const Sidebar = () => {
         <div className="bg-slate-200 p-[0.5px]"></div>
 
         <div className=" h-[calc(100vh-65px)] overflow-x-hidden overflow-y-auto scrollbar">
-          {allUser.length === 0 && (
+          {isLoading && (
+            <div className="mt-40">
+              {" "}
+              <Loading />
+            </div>
+          )}
+          {!isLoading && allUser.length === 0 && (
             <div className="mt-12">
               <div className="flex justify-center items-center my-4 text-slate-500">
                 <FiArrowUpLeft size={50} />
@@ -128,52 +137,64 @@ const Sidebar = () => {
               </p>
             </div>
           )}
-        
-          { allUser?.map((conv, index) => {
-            return (
-              <NavLink
-                to={"/" + conv?.userDetails?._id}
-                key={conv?._id}
-                className="flex items-center gap-2 py-3 px-2 border border-transparent hover:border-primary rounded hover:bg-slate-100 cursor-pointer"
-              >
-                <div>
-                  <Avatar
-                    imageUrl={conv?.userDetails?.profile_pic}
-                    name={conv?.userDetails?.name}
-                    width={40}
-                    height={40}
-                  />
-                </div>
-                <div>
-                  <h3 className="text-ellipsis line-clamp-1 font-semibold text-base">
-                    {conv?.userDetails?.name}
-                  </h3>
-                  <div className="text-slate-500 text-xs flex items-center gap-1">
-                    <div className="flex items-center gap-1">
-                      {conv?.lastMsg?.imageUrl && (
-                        <div className="flex items-center gap-1">
-                          <span>
-                            <FaImage />
-                          </span>
-                          {!conv?.lastMsg?.text && <span>Image</span>}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-ellipsis line-clamp-1">
-                      {conv?.lastMsg?.text}
+
+          {!isLoading &&
+            allUser?.map((conv, index) => {
+              return (
+                <NavLink
+                  to={"/" + conv?.userDetails?._id}
+                  key={conv?._id}
+                  className="flex items-center gap-2 py-3 px-2 border border-transparent hover:border-primary rounded hover:bg-slate-100 cursor-pointer"
+                >
+                  <div>
+                    <Avatar
+                      imageUrl={conv?.userDetails?.profile_pic}
+                      name={conv?.userDetails?.name}
+                      width={40}
+                      height={40}
+                      userId={conv?.userDetails?._id}
+                    />
+                  </div>
+                  <div>
+                  <div className="flex justify-between w-96">
+                    <h3 className="text-ellipsis line-clamp-1 font-semibold text-base">
+                      {conv?.userDetails?.name} 
+                    </h3>
+                    <p className="text-xs line-clamp-1 ">
+                    {moment(conv?.lastMsg?.createdAt).format("hh:mm")}
                     </p>
                   </div>
-                </div>
-                {Boolean(conv?.unseenMsg) && (
-                  <p className="text-xs w-6 h-6 flex justify-center items-center ml-auto p-1 bg-primary text-white font-semibold rounded-full">
-                    {conv?.unseenMsg}
-                  </p>
-                )}
-              </NavLink>
-            );
-          })}
+                    <div className="text-slate-500 text-xs flex items-center gap-1">
+                      <div className="flex items-center gap-1">
+                        {conv?.lastMsg?.imageUrl && (
+                          <div className="flex items-center gap-1">
+                            <span>
+                              <FaImage />
+                            </span>
+                            {!conv?.lastMsg?.text && <span>Image</span>}
+                          </div>
+                        )}
+                      </div>
+                      {Boolean(conv?.unseenMsg) ? (
+                        <p className="text-ellipsis font-bold text-blue-400  line-clamp-1">
+                         {conv?.lastMsg?.text} (unread...) 
+                        </p>
+                      ) : (
+                        <p className="text-ellipsis line-clamp-1">
+                          {conv?.lastMsg?.text} 
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {Boolean(conv?.unseenMsg) && (
+                    <p className="text-xs w-6 h-6 flex justify-center items-center ml-auto p-1 bg-primary text-white font-semibold rounded-full">
+                      {conv?.unseenMsg}
+                    </p>
+                  )}
+                </NavLink>
+              );
+            })}
         </div>
-        
       </div>
 
       {editUserOpen && (

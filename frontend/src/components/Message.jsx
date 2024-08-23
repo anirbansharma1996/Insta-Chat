@@ -202,8 +202,6 @@ const MessagePage = () => {
     setEditingMessageId(el._id);
   };
 
-  console.log(allMessage)
-
   const handleDeleteText = async (id) => {
     socketConnection.emit("delete-message", {
       messageId: id,
