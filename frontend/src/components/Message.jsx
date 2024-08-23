@@ -13,9 +13,10 @@ import { IoMdSend } from "react-icons/io";
 import moment from "moment";
 import { MdDone } from "react-icons/md";
 import { IoCheckmarkDone } from "react-icons/io5";
-import axios from "axios";
+import { FaCamera } from "react-icons/fa";
 import { MdModeEditOutline, MdDeleteOutline } from "react-icons/md";
 import { REACT_APP_BACKEND_URL } from "../../env";
+import { RxCross2 } from "react-icons/rx";
 
 const MessagePage = () => {
   const tk = localStorage.getItem("token");
@@ -42,7 +43,60 @@ const MessagePage = () => {
   const [editingMessageId, setEditingMessageId] = useState(null);
   //const [deleteMessageId, setDeleteMessageId] = useState(null);
   const [activeMessageId, setActiveMessageId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
   const currentMessage = useRef(null);
+
+  const handleOpenCamera = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+  //blobToFile
+  function blobToFile(blob, filename) {
+    return new File([blob], filename, { type: blob.type });
+  }
+  //base64ToBlob
+  function base64ToBlob(base64, mime) {
+    const byteChars = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteChars.length; offset += 512) {
+      const slice = byteChars.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: mime });
+  }
+
+  const handleCapturePhoto = async (imageData) => {
+    const base64String = imageData;
+    const mimeType = "image/jpeg";
+    const filename = Date.now() + "_" + user.name + "-self.jpg";
+
+    const base64Data = base64String.split(",")[1];
+    const blob = base64ToBlob(base64Data, mimeType);
+    const file = blobToFile(blob, filename);
+    setCapturedImage(URL.createObjectURL(file));
+    setLoading(true);
+    const uploadPhoto = await uploadFile(file);
+    setLoading(false);
+    setMessage((preve) => {
+      return {
+        ...preve,
+        imageUrl: uploadPhoto.url,
+      };
+    });
+    handleCloseModal();
+    setOpenImageVideoUpload(false);
+  };
 
   useEffect(() => {
     if (currentMessage.current) {
@@ -58,7 +112,6 @@ const MessagePage = () => {
   };
   const handleEditDeleteMessage = (el) => {
     if (el.msgByUserId === user._id) {
-      //setOpenEditDelete((prev) => !prev);
       setActiveMessageId((prevId) => (prevId === el._id ? null : el._id));
     }
   };
@@ -89,6 +142,7 @@ const MessagePage = () => {
 
   useEffect(() => {
     if (socketConnection) {
+      socketConnection.emit("delivered", params.userId);
       socketConnection.emit("message-page", params.userId);
       socketConnection.emit("seen", params.userId);
       socketConnection.on("message-user", (data) => {
@@ -97,13 +151,9 @@ const MessagePage = () => {
       socketConnection.on("message", (data) => {
         setAllMessage(data);
       });
-      // socketConnection.on("delete-message", () => {
-      //   setAllMessage((prevMessages) =>
-      //     prevMessages.filter((msg) => msg._id !== deleteMessageId)
-      //   );
-      // });
+ 
     }
-  }, [socketConnection, params?.userId, user , isLoading]);
+  }, [socketConnection, params?.userId, user]);
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -118,11 +168,9 @@ const MessagePage = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-
     if (message.text || message.imageUrl) {
       if (socketConnection) {
         if (editingMessageId) {
-          // Update existing message
           socketConnection.emit("update-message", {
             messageId: editingMessageId,
             newText: message.text,
@@ -130,7 +178,6 @@ const MessagePage = () => {
           });
           setEditingMessageId(null);
         } else {
-          // Send a new message
           socketConnection.emit("new message", {
             sender: user?._id,
             receiver: params.userId,
@@ -155,26 +202,14 @@ const MessagePage = () => {
     setEditingMessageId(el._id);
   };
 
-  // const handleDeleteText = async (id) => {
-  //   setDeleteMessageId(id);
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await axios.delete(
-  //       `${REACT_APP_BACKEND_URL}/delete-message/${id}`,
-  //       {
-  //         headers: { Authorization: tk },
-  //       }
-  //     );
-  //     setIsLoading(false);
-  //     if (res.status === 200) {
-  //       socketConnection.emit("delete-message", id);
-  //       setDeleteMessageId(null);
-  //     }
-  //   } catch (error) {
-  //     setIsLoading(false);
-  //     console.log(error);
-  //   }
-  // };
+  console.log(allMessage)
+
+  const handleDeleteText = async (id) => {
+    socketConnection.emit("delete-message", {
+      messageId: id,
+    });
+    setEditingMessageId(null);
+  };
 
   return (
     <div
@@ -221,7 +256,7 @@ const MessagePage = () => {
       {/***show all message */}
       <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50">
         <div
-          className="flex flex-col gap-2 py-2 mx-2 relative"
+          className="flex flex-col gap-2 py-2 mx-2 "
           ref={currentMessage}
         >
           {allMessage.map((msg) => {
@@ -235,16 +270,17 @@ const MessagePage = () => {
                     : "bg-white"
                 } cursor-pointer`}
               >
+                 
                 <div className="w-full relative">
                   {msg?.imageUrl && (
                     <img
-                      src={msg?.imageUrl}
+                      src={ !msg?.isDeleted && msg?.imageUrl}
                       className="w-full h-full object-scale-down"
                     />
                   )}
                 </div>
-                <p className="px-2">{msg.text}</p>
-                <div className="flex items-center">
+                { msg?.isDeleted ? <p className="px-2 text-gray-400">{'this message hasbeen deleted...'}</p> : <p className="px-2">{msg.text}</p>}
+                { !msg?.isDeleted ? <div className="flex items-center">
                   <p className="text-xs ml-auto w-fit">
                     {moment(msg.createdAt).format("hh:mm")}
                   </p>
@@ -256,13 +292,13 @@ const MessagePage = () => {
                       <MdDone />
                     )}
                   </p>
-                </div>
-                {/* edit and delete message */}
-                {activeMessageId === msg._id && (
-                  <div className="bg-white rounded absolute right-5 bottom-20 w-36 p-2">
+                </div> : ""}
+               {/* edit and delete message */}
+               {activeMessageId === msg._id && !msg?.isDeleted  &&(
+                  <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
                     <form>
                       <label
-                        htmlFor=""
+                        
                         onClick={() => handleEditText(msg)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
                       >
@@ -271,8 +307,8 @@ const MessagePage = () => {
                         </div>
                         <p>Edit </p>
                       </label>
-                      {/* <label
-                        htmlFor=""
+                      <label
+                        
                         onClick={() => handleDeleteText(msg._id)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
                       >
@@ -280,7 +316,7 @@ const MessagePage = () => {
                           <MdDeleteOutline size={20} />
                         </div>
                         <p>Delete</p>
-                      </label> */}
+                      </label>
                     </form>
                   </div>
                 )}
@@ -298,11 +334,11 @@ const MessagePage = () => {
             >
               <IoClose size={30} />
             </div>
-            <div className="bg-white p-3">
+            <div className="bg-white p-1">
               <img
                 src={message.imageUrl}
                 alt="uploadImage"
-                className="aspect-square w-full h-full max-w-sm m-2 object-scale-down"
+                className="aspect-auto w-96 h-full max-w-sm m-1  object-scale-down"
               />
             </div>
           </div>
@@ -321,13 +357,13 @@ const MessagePage = () => {
             onClick={handleUploadImageVideoOpen}
             className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
           >
-            <FaPlus size={20} />
+            {openImageVideoUpload ? <RxCross2 size={26}/> : <FaPlus size={20} />}
           </button>
 
           {/**video and image */}
           {openImageVideoUpload && (
             <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
-              <form>
+              <div>
                 <label
                   htmlFor="uploadImage"
                   className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
@@ -344,7 +380,24 @@ const MessagePage = () => {
                   onChange={handleUploadImage}
                   className="hidden"
                 />
-              </form>
+                <hr />
+                <label
+                  onClick={handleOpenCamera}
+                  htmlFor=""
+                  className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                >
+                  <div className="text-primary">
+                    <FaCamera size={18} />
+                  </div>
+                  <p>Camera</p>
+                </label>
+
+                <CameraModal
+                  isOpen={isModalOpen}
+                  onClose={handleCloseModal}
+                  onCapture={handleCapturePhoto}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -368,3 +421,79 @@ const MessagePage = () => {
 };
 
 export default MessagePage;
+
+
+// opening selfie / inbuild camera , to click photo .
+
+export function CameraModal({ isOpen, onClose, onCapture }) {
+  const videoRef = useRef(null);
+
+  const openCamera = () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        })
+        .catch((error) => {
+          console.error("Error accessing camera:", error);
+        });
+    } else {
+      alert("Camera not supported on this device");
+    }
+  };
+
+  const capturePhoto = () => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    const video = videoRef.current;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = canvas.toDataURL("image/png");
+    onCapture(imageData);
+    closeCamera();
+  };
+
+  const closeCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject;
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => track.stop());
+    }
+    videoRef.current.srcObject = null;
+    onClose();
+  };
+
+  if (isOpen) {
+    openCamera();
+  }
+
+  return (
+    isOpen && (
+      <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center">
+        <div className="relative bg-transparent p-4 rounded-lg backdrop-blur-sm">
+          <button
+            onClick={closeCamera}
+            className="absolute top-2 right-2 text-black-800"
+          >
+            ✕
+          </button>
+          <video ref={videoRef} className="w-96 h-auto" autoPlay></video>
+          <div className="text-center">
+            <button
+              onClick={capturePhoto}
+              className="mt-4 px-4 py-2 bg-blue-900 text-white rounded"
+            >
+              <FaCamera />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
+}

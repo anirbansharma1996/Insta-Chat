@@ -135,6 +135,25 @@ io.on("connection", async (socket) => {
     io.to(msgByUserId).emit("conversation", conversationReceiver);
   });
 
+  // Mark messages as delivered
+  socket.on("delivered", async (msgByUserId) => {
+    let conversation = await Conversation.findOne({
+      $or: [
+        { sender: user?._id, receiver: msgByUserId },
+        { sender: msgByUserId, receiver: user?._id },
+      ],
+    });
+    const conversationMessageId = conversation?.messages || [];
+    await Message.updateMany(
+      { _id: { $in: conversationMessageId }, msgByUserId: msgByUserId },
+      { $set: { isDelivered : true } }
+    );
+    const conversationSender = await getConversation(user?._id?.toString());
+    //const conversationReceiver = await getConversation(msgByUserId);
+    io.to(user?._id?.toString()).emit("conversation", conversationSender);
+    //io.to(msgByUserId).emit("conversation", conversationReceiver);
+  });
+
   // Update message data
   socket.on("update-message", async (data) => {
     const { messageId, newText, newImageUrl } = data;
@@ -178,41 +197,51 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // // Delete message
-  // socket.on("delete-message", async (messageId) => {
-  //   try {
-  //     const deletedMessage = await Message.findByIdAndDelete(messageId);
+    // delete message data
+    socket.on("delete-message", async (data) => {
+      const { messageId } = data;
   
-  //     if (deletedMessage) {
-  //       // Emit message deletion to both the sender and receiver
-  //       io.to(deletedMessage.msgByUserId.toString()).emit("delete-message", messageId);
-        
-  //       // Get the conversation for both users
-  //       const conversation = await Conversation.findOne({
-  //         $or: [
-  //           { sender: deletedMessage.msgByUserId, receiver: deletedMessage.receiver },
-  //           { sender: deletedMessage.receiver, receiver: deletedMessage.msgByUserId },
-  //         ],
-  //       });
+      try {
+        const deletedMessage = await Message.findByIdAndUpdate(
+          messageId,
+          {
+            $set: {
+              isDeleted : true
+            },
+          },
+          { new: true }
+        );
   
-  //       // Remove the deleted message from the conversation
-  //       await Conversation.updateMany(
-  //         { _id: conversation._id },
-  //         { $pull: { messages: messageId } }
-  //       );
+        if (deletedMessage) {
+          const conversation = await Conversation.findOne({
+            messages: messageId,
+          }).populate("messages");
   
-  //       // Emit updated conversation
-  //       io.to(deletedMessage.msgByUserId.toString()).emit("message", conversation.messages);
-  //       io.to(deletedMessage.receiver.toString()).emit("message", conversation.messages);
-  //     } else {
-  //       socket.emit("delete-failure", { error: "Message not found" });
-  //     }
-  //   } catch (error) {
-  //     socket.emit("delete-failure", { error: error.message });
-  //   }
-  // });
+          io.to(deletedMessage.msgByUserId.toString()).emit(
+            "message",
+            conversation.messages
+          );
   
+          const otherUser =
+            conversation.sender.toString() ===
+            deletedMessage.msgByUserId.toString()
+              ? conversation.receiver
+              : conversation.sender;
+  
+          io.to(otherUser.toString()).emit("message", conversation.messages);
+  
+          socket.emit("delete-success", { messageId });
+        } else {
+          socket.emit("delete-failure", { error: "Message not found" });
+        }
+      } catch (error) {
+        socket.emit("delete-failure", { error: error.message });
+      }
+    });
 
+
+ 
+  
   // Disconnect
   socket.on("disconnect", () => {
     onlineUser.delete(user?._id?.toString());
