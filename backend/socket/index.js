@@ -77,6 +77,7 @@ io.on("connection", async (socket) => {
       imageUrl: data.imageUrl,
       videoUrl: data.videoUrl,
       msgByUserId: data?.msgByUserId,
+      rcvByUserId : data?.rcvByUserId
     });
     const saveMessage = await message.save();
 
@@ -149,9 +150,7 @@ io.on("connection", async (socket) => {
       { $set: { isDelivered : true } }
     );
     const conversationSender = await getConversation(user?._id?.toString());
-    //const conversationReceiver = await getConversation(msgByUserId);
     io.to(user?._id?.toString()).emit("conversation", conversationSender);
-    //io.to(msgByUserId).emit("conversation", conversationReceiver);
   });
 
   // Update message data
@@ -196,11 +195,9 @@ io.on("connection", async (socket) => {
       socket.emit("update-failure", { error: error.message });
     }
   });
-
     // delete message data
     socket.on("delete-message", async (data) => {
       const { messageId } = data;
-  
       try {
         const deletedMessage = await Message.findByIdAndUpdate(
           messageId,
@@ -238,10 +235,6 @@ io.on("connection", async (socket) => {
         socket.emit("delete-failure", { error: error.message });
       }
     });
-
-
- 
-  
   // Disconnect
   socket.on("disconnect", () => {
     onlineUser.delete(user?._id?.toString());

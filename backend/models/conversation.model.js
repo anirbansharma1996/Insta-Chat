@@ -32,6 +32,11 @@ const MessageSchema = new Schema(
       required: true,
       ref: "users",
     },
+    rcvByUserId: {
+      type: mongoose.Schema.ObjectId,
+      required: true,
+      ref: "users",
+    },
   },
   { timestamps: true }
 );
