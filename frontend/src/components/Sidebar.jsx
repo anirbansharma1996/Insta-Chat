@@ -63,7 +63,6 @@ const Sidebar = () => {
     localStorage.removeItem("token");
   };
 
-
   return (
     <div className="w-full h-full grid grid-cols-[48px,1fr] bg-white">
       <div className="bg-slate-100 w-12 h-full rounded-tr-lg rounded-br-lg py-5 text-slate-600 flex flex-col justify-between">
@@ -156,14 +155,9 @@ const Sidebar = () => {
                     />
                   </div>
                   <div>
-                  <div className="flex justify-between w-96">
                     <h3 className="text-ellipsis line-clamp-1 font-semibold text-base">
-                      {conv?.userDetails?.name} 
+                      {conv?.userDetails?.name}
                     </h3>
-                    <p className="text-xs line-clamp-1 ">
-                    
-                    </p>
-                  </div>
                     <div className="text-slate-500 text-xs flex items-center gap-1">
                       <div className="flex items-center gap-1">
                         {conv?.lastMsg?.imageUrl && (
@@ -177,11 +171,13 @@ const Sidebar = () => {
                       </div>
                       {Boolean(conv?.unseenMsg) ? (
                         <p className="text-ellipsis font-bold text-blue-400  line-clamp-1">
-                         {conv?.lastMsg?.text} (unread...) [ {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
+                          {conv?.lastMsg?.text} (unread...) [{" "}
+                          {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
                         </p>
                       ) : (
                         <p className="text-ellipsis line-clamp-1">
-                          {conv?.lastMsg?.text} [ {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
+                          {conv?.lastMsg?.text} [{" "}
+                          {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
                         </p>
                       )}
                     </div>
