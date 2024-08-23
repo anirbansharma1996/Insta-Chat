@@ -245,9 +245,9 @@ const MessagePage = () => {
         </div>
 
         <div>
-          <button className="cursor-pointer hover:text-primary">
+          {/* <button className="cursor-pointer hover:text-primary">
             <HiDotsVertical />
-          </button>
+          </button> */}
         </div>
       </header>
 

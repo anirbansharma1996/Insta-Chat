@@ -156,11 +156,8 @@ io.on("connection", async (socket) => {
   // Update message data
   socket.on("update-message", async (data) => {
     const { messageId, newText, newImageUrl } = data;
-
     try {
-      const updatedMessage = await Message.findByIdAndUpdate(
-        messageId,
-        {
+      const updatedMessage = await Message.findByIdAndUpdate(messageId,{
           $set: {
             text: newText,
             imageUrl: newImageUrl,
@@ -168,17 +165,14 @@ io.on("connection", async (socket) => {
         },
         { new: true }
       );
-
       if (updatedMessage) {
         const conversation = await Conversation.findOne({
           messages: messageId,
         }).populate("messages");
-
         io.to(updatedMessage.msgByUserId.toString()).emit(
           "message",
           conversation.messages
         );
-
         const otherUser =
           conversation.sender.toString() ===
           updatedMessage.msgByUserId.toString()
@@ -186,7 +180,6 @@ io.on("connection", async (socket) => {
             : conversation.sender;
 
         io.to(otherUser.toString()).emit("message", conversation.messages);
-
         socket.emit("update-success", { messageId });
       } else {
         socket.emit("update-failure", { error: "Message not found" });
