@@ -20,7 +20,9 @@ import { MdOutlineReply } from "react-icons/md";
 
 const MessagePage = () => {
   const params = useParams();
-  const socketConnection = useSelector((state) => state?.user?.socketConnection);
+  const socketConnection = useSelector(
+    (state) => state?.user?.socketConnection
+  );
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState({
     name: "",
@@ -40,6 +42,7 @@ const MessagePage = () => {
   const [activeMessageId, setActiveMessageId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
   const currentMessage = useRef(null);
 
   const handleOpenCamera = () => {
@@ -143,11 +146,24 @@ const MessagePage = () => {
       socketConnection.on("message", (data) => {
         setAllMessage(data);
       });
+      socketConnection.on("display", (data) => {
+        console.log(data)
+        if (data.typing) {
+          setIsTyping(true);
+        } else {
+          setIsTyping(false);
+        }
+      });
     }
   }, [socketConnection, params?.userId, user]);
 
   const handleOnChange = (e) => {
-    const { name, value } = e.target;
+    const { value } = e.target;
+    if (value) {
+      socketConnection.emit("typing", { typing: true });
+    } else {
+      socketConnection.emit("typing", { typing: false });
+    }
     setMessage((preve) => {
       return {
         ...preve,
@@ -177,12 +193,14 @@ const MessagePage = () => {
             rcvByUserId: params.userId,
           });
         }
+        socketConnection.emit("typing", { typing: false });
         setMessage({
           text: "",
           imageUrl: "",
         });
       }
     }
+    
   };
 
   const handleEditText = (el) => {
@@ -202,8 +220,11 @@ const MessagePage = () => {
 
   return (
     <div
-      style={{backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`}}
-      className="bg-no-repeat bg-cover">
+      style={{
+        backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`,
+      }}
+      className="bg-no-repeat bg-cover"
+    >
       <header className="sticky top-0 h-16 bg-white flex justify-between items-center px-4">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden">
@@ -223,10 +244,12 @@ const MessagePage = () => {
               {dataUser?.name}
             </h3>
             <p className="-my-2 text-sm">
-              {dataUser.online ? (
+              {!isTyping && dataUser.online ? (
                 <span className="text-primary">online</span>
+              ) : isTyping ? (
+                <span className="text-slate-400">typing...</span>
               ) : (
-                <span className="text-slate-400">offline</span>
+                <span className="text-slate-400"></span>
               )}
             </p>
           </div>
@@ -255,8 +278,8 @@ const MessagePage = () => {
                 {activeMessageId === msg._id && !msg?.isDeleted && (
                   <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
                     <form>
-                    <label
-                        onClick={() =>alert('we will add this soon')}
+                      <label
+                        onClick={() => alert("we will add this soon")}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
                       >
                         <div className="text-primary">
@@ -306,13 +329,15 @@ const MessagePage = () => {
                       {moment(msg.createdAt).format("hh:mm A")}
                     </p>
                     &nbsp;
-                   {  user._id === msg?.msgByUserId && <p className="text-xs">
-                      {  msg.seen ? (
-                        <IoCheckmarkDone className="text-blue-600" />
-                      ) : (
-                        <MdDone />
-                      )}
-                    </p>}
+                    {user._id === msg?.msgByUserId && (
+                      <p className="text-xs">
+                        {msg.seen ? (
+                          <IoCheckmarkDone className="text-blue-600" />
+                        ) : (
+                          <MdDone />
+                        )}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   ""
@@ -325,7 +350,10 @@ const MessagePage = () => {
         {/**upload Image display */}
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
-            <div className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600" onClick={handleClearUploadImage}>
+            <div
+              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
+              onClick={handleClearUploadImage}
+            >
               <IoClose size={30} />
             </div>
             <div className="bg-white p-1">
@@ -346,7 +374,10 @@ const MessagePage = () => {
       {/**send message */}
       <section className="h-16 bg-white flex items-center px-4">
         <div className="relative ">
-          <button onClick={handleUploadImageVideoOpen} className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey">
+          <button
+            onClick={handleUploadImageVideoOpen}
+            className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
+          >
             {openImageVideoUpload ? (
               <RxCross2 size={26} />
             ) : (
