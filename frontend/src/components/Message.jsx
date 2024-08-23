@@ -15,15 +15,12 @@ import { MdDone } from "react-icons/md";
 import { IoCheckmarkDone } from "react-icons/io5";
 import { FaCamera } from "react-icons/fa";
 import { MdModeEditOutline, MdDeleteOutline } from "react-icons/md";
-import { REACT_APP_BACKEND_URL } from "../../env";
 import { RxCross2 } from "react-icons/rx";
+import { MdOutlineReply } from "react-icons/md";
 
 const MessagePage = () => {
-  const tk = localStorage.getItem("token");
   const params = useParams();
-  const socketConnection = useSelector(
-    (state) => state?.user?.socketConnection
-  );
+  const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState({
     name: "",
@@ -33,7 +30,6 @@ const MessagePage = () => {
     _id: "",
   });
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({
     text: "",
     imageUrl: "",
@@ -41,7 +37,6 @@ const MessagePage = () => {
   const [loading, setLoading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
   const [editingMessageId, setEditingMessageId] = useState(null);
-  //const [deleteMessageId, setDeleteMessageId] = useState(null);
   const [activeMessageId, setActiveMessageId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -62,7 +57,6 @@ const MessagePage = () => {
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64);
     const byteArrays = [];
-
     for (let offset = 0; offset < byteChars.length; offset += 512) {
       const slice = byteChars.slice(offset, offset + 512);
       const byteNumbers = new Array(slice.length);
@@ -72,7 +66,6 @@ const MessagePage = () => {
       const byteArray = new Uint8Array(byteNumbers);
       byteArrays.push(byteArray);
     }
-
     return new Blob(byteArrays, { type: mime });
   }
 
@@ -80,7 +73,6 @@ const MessagePage = () => {
     const base64String = imageData;
     const mimeType = "image/jpeg";
     const filename = Date.now() + "_" + user.name + "-self.jpg";
-
     const base64Data = base64String.split(",")[1];
     const blob = base64ToBlob(base64Data, mimeType);
     const file = blobToFile(blob, filename);
@@ -118,7 +110,6 @@ const MessagePage = () => {
 
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
-
     setLoading(true);
     const uploadPhoto = await uploadFile(file);
     setLoading(false);
@@ -131,6 +122,7 @@ const MessagePage = () => {
       };
     });
   };
+
   const handleClearUploadImage = () => {
     setMessage((preve) => {
       return {
@@ -156,7 +148,6 @@ const MessagePage = () => {
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-
     setMessage((preve) => {
       return {
         ...preve,
@@ -211,11 +202,8 @@ const MessagePage = () => {
 
   return (
     <div
-      style={{
-        backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`,
-      }}
-      className="bg-no-repeat bg-cover"
-    >
+      style={{backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`}}
+      className="bg-no-repeat bg-cover">
       <header className="sticky top-0 h-16 bg-white flex justify-between items-center px-4">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden">
@@ -243,14 +231,12 @@ const MessagePage = () => {
             </p>
           </div>
         </div>
-
         <div>
           {/* <button className="cursor-pointer hover:text-primary">
             <HiDotsVertical />
           </button> */}
         </div>
       </header>
-
       {/***show all message */}
       <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50">
         <div className="flex flex-col gap-2 py-2 mx-2 " ref={currentMessage}>
@@ -265,6 +251,40 @@ const MessagePage = () => {
                     : "bg-white"
                 } cursor-pointer`}
               >
+                {/* edit and delete message */}
+                {activeMessageId === msg._id && !msg?.isDeleted && (
+                  <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
+                    <form>
+                    <label
+                        onClick={() =>alert('we will add this soon')}
+                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <div className="text-primary">
+                          <MdOutlineReply size={20} />
+                        </div>
+                        <p>Reply</p>
+                      </label>
+                      <label
+                        onClick={() => handleEditText(msg)}
+                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <div className="text-primary">
+                          <MdModeEditOutline size={20} />
+                        </div>
+                        <p>Edit </p>
+                      </label>
+                      <label
+                        onClick={() => handleDeleteText(msg._id)}
+                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <div className="text-primary">
+                          <MdDeleteOutline size={20} />
+                        </div>
+                        <p>Delete</p>
+                      </label>
+                    </form>
+                  </div>
+                )}
                 <div className="w-full relative">
                   {msg?.imageUrl && (
                     <img
@@ -297,31 +317,6 @@ const MessagePage = () => {
                 ) : (
                   ""
                 )}
-                {/* edit and delete message */}
-                {activeMessageId === msg._id && !msg?.isDeleted && (
-                  <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
-                    <form>
-                      <label
-                        onClick={() => handleEditText(msg)}
-                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                      >
-                        <div className="text-primary">
-                          <MdModeEditOutline size={20} />
-                        </div>
-                        <p>Edit </p>
-                      </label>
-                      <label
-                        onClick={() => handleDeleteText(msg._id)}
-                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                      >
-                        <div className="text-primary">
-                          <MdDeleteOutline size={20} />
-                        </div>
-                        <p>Delete</p>
-                      </label>
-                    </form>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -330,10 +325,7 @@ const MessagePage = () => {
         {/**upload Image display */}
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
-            <div
-              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
-              onClick={handleClearUploadImage}
-            >
+            <div className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600" onClick={handleClearUploadImage}>
               <IoClose size={30} />
             </div>
             <div className="bg-white p-1">
@@ -351,14 +343,10 @@ const MessagePage = () => {
           </div>
         )}
       </section>
-
       {/**send message */}
       <section className="h-16 bg-white flex items-center px-4">
         <div className="relative ">
-          <button
-            onClick={handleUploadImageVideoOpen}
-            className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-          >
+          <button onClick={handleUploadImageVideoOpen} className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey">
             {openImageVideoUpload ? (
               <RxCross2 size={26} />
             ) : (
