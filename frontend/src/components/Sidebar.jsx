@@ -63,6 +63,7 @@ const Sidebar = () => {
     localStorage.removeItem("token");
   };
 
+
   return (
     <div className="w-full h-full grid grid-cols-[48px,1fr] bg-white">
       <div className="bg-slate-100 w-12 h-full rounded-tr-lg rounded-br-lg py-5 text-slate-600 flex flex-col justify-between">
@@ -169,17 +170,10 @@ const Sidebar = () => {
                           </div>
                         )}
                       </div>
-                      {Boolean(conv?.unseenMsg) ? (
-                        <p className="text-ellipsis font-bold text-blue-400  line-clamp-1">
-                          {conv?.lastMsg?.text} (unread...) [{" "}
-                          {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
-                        </p>
-                      ) : (
-                        <p className="text-ellipsis line-clamp-1">
-                          {conv?.lastMsg?.text} [{" "}
-                          {moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
-                        </p>
-                      )}
+                      <p className="line-clamp-1 text-gray-400">
+                        {!conv?.lastMsg.isDeleted ? conv?.lastMsg?.text : "( This message hasbeen deleted... )"} [{" "}
+                        {!conv?.lastMsg.isDeleted && moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
+                      </p>
                     </div>
                   </div>
                   {Boolean(conv?.unseenMsg) && (
