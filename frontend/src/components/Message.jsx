@@ -45,18 +45,23 @@ const MessagePage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const currentMessage = useRef(null);
 
+  // open camera modal 
   const handleOpenCamera = () => {
     setIsModalOpen(true);
   };
 
+  // close camera modal 
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
-  //blobToFile
+
+
+  //blobToFile convertion
   function blobToFile(blob, filename) {
     return new File([blob], filename, { type: blob.type });
   }
-  //base64ToBlob
+
+  //base64ToBlob convertion 
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64);
     const byteArrays = [];
@@ -72,6 +77,7 @@ const MessagePage = () => {
     return new Blob(byteArrays, { type: mime });
   }
 
+  // base64 to Blob file convert 
   const handleCapturePhoto = async (imageData) => {
     const base64String = imageData;
     const mimeType = "image/jpeg";
@@ -93,6 +99,7 @@ const MessagePage = () => {
     setOpenImageVideoUpload(false);
   };
 
+// scroll into view text
   useEffect(() => {
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({
@@ -102,22 +109,25 @@ const MessagePage = () => {
     }
   }, [allMessage]);
 
+  // open upload image / video 
   const handleUploadImageVideoOpen = () => {
     setOpenImageVideoUpload((preve) => !preve);
   };
+
+// open edit / delete / reply message modal
   const handleEditDeleteMessage = (el) => {
     if (el.msgByUserId === user._id) {
       setActiveMessageId((prevId) => (prevId === el._id ? null : el._id));
     }
   };
-
+ 
+  // uploading image / video
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
     setLoading(true);
     const uploadPhoto = await uploadFile(file);
     setLoading(false);
     setOpenImageVideoUpload(false);
-
     setMessage((preve) => {
       return {
         ...preve,
@@ -126,6 +136,7 @@ const MessagePage = () => {
     });
   };
 
+// clear upload image field 
   const handleClearUploadImage = () => {
     setMessage((preve) => {
       return {
@@ -135,6 +146,8 @@ const MessagePage = () => {
     });
   };
 
+
+  // on mounting this function will run 
   useEffect(() => {
     if (socketConnection) {
       socketConnection.emit("delivered", params.userId);
@@ -155,7 +168,8 @@ const MessagePage = () => {
       });
     }
   }, [socketConnection, params?.userId, user]);
-
+  
+  // input taking 
   const handleOnChange = (e) => {
     const { value } = e.target;
     if (value) {
@@ -171,6 +185,7 @@ const MessagePage = () => {
     });
   };
 
+// sending message / updating message 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (message.text || message.imageUrl) {
@@ -199,9 +214,9 @@ const MessagePage = () => {
         });
       }
     }
-    
   };
 
+// editing text function fire 
   const handleEditText = (el) => {
     setMessage({
       text: el.text,
@@ -210,6 +225,7 @@ const MessagePage = () => {
     setEditingMessageId(el._id);
   };
 
+// delete a single text
   const handleDeleteText = async (id) => {
     socketConnection.emit("delete-message", {
       messageId: id,

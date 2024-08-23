@@ -1,10 +1,10 @@
-const express = require("express");
-const { Server } = require("socket.io");
-const http = require("http");
 const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken");
-const UserModel = require("../models/user.model.js");
 const { Conversation, Message } = require("../models/conversation.model.js");
 const getConversation = require("../helpers/getConversation");
+const UserModel = require("../models/user.model.js");
+const { Server } = require("socket.io");
+const express = require("express");
+const http = require("http");
 
 const app = express();
 
@@ -23,6 +23,7 @@ const onlineUser = new Set();
 io.on("connection", async (socket) => {
   const token = socket.handshake.auth.token;
   const user = await getUserDetailsFromToken(token);
+
   // Create a room for the user
   socket.join(user?._id?.toString());
   onlineUser.add(user?._id?.toString());
