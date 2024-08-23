@@ -286,13 +286,13 @@ const MessagePage = () => {
                       {moment(msg.createdAt).format("hh:mm")}
                     </p>
                     &nbsp;
-                    <p className="text-xs">
-                      {msg.seen ? (
+                   {  user._id === msg?.msgByUserId && <p className="text-xs">
+                      {  msg.seen ? (
                         <IoCheckmarkDone className="text-blue-600" />
                       ) : (
                         <MdDone />
                       )}
-                    </p>
+                    </p>}
                   </div>
                 ) : (
                   ""
