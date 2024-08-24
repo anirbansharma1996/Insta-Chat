@@ -48,7 +48,14 @@ io.on("connection", async (socket) => {
         { sender: userId, receiver: user?._id },
       ],
     })
-      .populate("messages")
+      .populate({
+        path: "messages",
+        populate: {
+          path: "replyTo",
+          model: "messages",
+          options: { lean: true },
+        },
+      })
       .sort({ updatedAt: -1 });
 
     socket.emit("message", getConversationMessage?.messages || []);
@@ -79,7 +86,8 @@ io.on("connection", async (socket) => {
     const message = new Message({
       text: data.text,
       imageUrl: data.imageUrl,
-      videoUrl: data.videoUrl,
+      audioUrl: data.audioUrl,
+      replyTo: data.replyTo,
       msgByUserId: data?.msgByUserId,
       rcvByUserId: data?.rcvByUserId,
     });
@@ -98,7 +106,14 @@ io.on("connection", async (socket) => {
         { sender: data?.receiver, receiver: data?.sender },
       ],
     })
-      .populate("messages")
+      .populate({
+        path: "messages",
+        populate: {
+          path: "replyTo",
+          model: "messages",
+          options: { lean: true },
+        },
+      })
       .sort({ updatedAt: -1 });
 
     io.to(data?.sender).emit("message", getConversationMessage?.messages || []);
@@ -177,7 +192,14 @@ io.on("connection", async (socket) => {
       if (updatedMessage) {
         const conversation = await Conversation.findOne({
           messages: messageId,
-        }).populate("messages");
+        }).populate({
+          path: "messages",
+          populate: {
+            path: "replyTo",
+            model: "messages",
+            options: { lean: true },
+          },
+        });
         io.to(updatedMessage.msgByUserId.toString()).emit(
           "message",
           conversation.messages

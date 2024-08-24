@@ -9,10 +9,10 @@ import { FaImage } from "react-icons/fa6";
 import uploadFile from "../helpers/uploadFile";
 import { IoClose } from "react-icons/io5";
 import Loading from "./Loading";
-import { IoMdSend } from "react-icons/io";
+import { IoMdSend, IoMdMic } from "react-icons/io";
 import moment from "moment";
 import { MdDone } from "react-icons/md";
-import { IoCheckmarkDone } from "react-icons/io5";
+import { IoCheckmarkDone, IoStopCircleOutline } from "react-icons/io5";
 import { FaCamera } from "react-icons/fa";
 import { MdModeEditOutline, MdDeleteOutline } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
@@ -43,25 +43,28 @@ const MessagePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [replyingMessage, setReplyingMessage] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
   const currentMessage = useRef(null);
 
-  // open camera modal 
+  // open camera modal
   const handleOpenCamera = () => {
     setIsModalOpen(true);
   };
 
-  // close camera modal 
+  // close camera modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
-
 
   //blobToFile convertion
   function blobToFile(blob, filename) {
     return new File([blob], filename, { type: blob.type });
   }
 
-  //base64ToBlob convertion 
+  //base64ToBlob convertion
   function base64ToBlob(base64, mime) {
     const byteChars = atob(base64);
     const byteArrays = [];
@@ -77,7 +80,7 @@ const MessagePage = () => {
     return new Blob(byteArrays, { type: mime });
   }
 
-  // base64 to Blob file convert 
+  // base64 to Blob file convert
   const handleCapturePhoto = async (imageData) => {
     const base64String = imageData;
     const mimeType = "image/jpeg";
@@ -99,7 +102,7 @@ const MessagePage = () => {
     setOpenImageVideoUpload(false);
   };
 
-// scroll into view text
+  // scroll into view text
   useEffect(() => {
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({
@@ -109,18 +112,16 @@ const MessagePage = () => {
     }
   }, [allMessage]);
 
-  // open upload image / video 
+  // open upload image / video
   const handleUploadImageVideoOpen = () => {
     setOpenImageVideoUpload((preve) => !preve);
   };
 
-// open edit / delete / reply message modal
+  // open edit / delete / reply message modal
   const handleEditDeleteMessage = (el) => {
-    if (el.msgByUserId === user._id) {
-      setActiveMessageId((prevId) => (prevId === el._id ? null : el._id));
-    }
+    setActiveMessageId((prevId) => (prevId === el._id ? null : el._id));
   };
- 
+
   // uploading image / video
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
@@ -136,7 +137,7 @@ const MessagePage = () => {
     });
   };
 
-// clear upload image field 
+  // clear upload image field
   const handleClearUploadImage = () => {
     setMessage((preve) => {
       return {
@@ -146,8 +147,11 @@ const MessagePage = () => {
     });
   };
 
+  const handleClearUploadAudio = () => {
+    setAudioUrl(false);
+  };
 
-  // on mounting this function will run 
+  // on mounting this socket connection function will run
   useEffect(() => {
     if (socketConnection) {
       socketConnection.emit("delivered", params.userId);
@@ -168,33 +172,33 @@ const MessagePage = () => {
       });
     }
   }, [socketConnection, params?.userId, user]);
-  
-  // input taking 
+
+  // input taking
   const handleOnChange = (e) => {
     const { value } = e.target;
-    if (value) {
-      socketConnection.emit("typing", { typing: true });
-    } else {
-      socketConnection.emit("typing", { typing: false });
-    }
+    socketConnection.emit("typing", { typing: true });
     setMessage((preve) => {
       return {
         ...preve,
         text: value,
       };
     });
+    if (value) {
+      setTimeout(() => {
+        socketConnection.emit("typing", { typing: false });
+      }, 3000);
+    }
   };
 
-// sending message / updating message 
+  // sending message / updating message
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (message.text || message.imageUrl) {
+    if (message.text || message.imageUrl || message.audio) {
       if (socketConnection) {
         if (editingMessageId) {
           socketConnection.emit("update-message", {
             messageId: editingMessageId,
             newText: message.text,
-            newImageUrl: message.imageUrl,
           });
           setEditingMessageId(null);
         } else {
@@ -203,11 +207,15 @@ const MessagePage = () => {
             receiver: params.userId,
             text: message.text,
             imageUrl: message.imageUrl,
+            audioUrl: message.audio,
             msgByUserId: user?._id,
             rcvByUserId: params.userId,
+            replyTo: replyingMessage?._id,
           });
         }
         socketConnection.emit("typing", { typing: false });
+        setReplyingMessage(null);
+        setAudioUrl(false);
         setMessage({
           text: "",
           imageUrl: "",
@@ -216,7 +224,7 @@ const MessagePage = () => {
     }
   };
 
-// editing text function fire 
+  // editing text function fire
   const handleEditText = (el) => {
     setMessage({
       text: el.text,
@@ -225,13 +233,55 @@ const MessagePage = () => {
     setEditingMessageId(el._id);
   };
 
-// delete a single text
+  // delete a single text
   const handleDeleteText = async (id) => {
     socketConnection.emit("delete-message", {
       messageId: id,
     });
     setEditingMessageId(null);
   };
+  // reply to a text
+  const handleReply = (message) => {
+    setReplyingMessage(message);
+  };
+
+  // voice record
+  const startRecording = async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const recorder = new MediaRecorder(stream);
+
+        recorder.ondataavailable = async (event) => {
+          if (event.data.size > 0) {
+            const audioBlob = event.data;
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audiodata = await uploadFile(audioBlob);
+            setMessage({ ...message, audio: audiodata.url });
+            setAudioUrl(audioUrl);
+          }
+        };
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+      } catch (error) {
+        alert("Error accessing audio devices");
+      }
+    } else {
+      alert("Audio recording is not supported in this browser.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+
 
   return (
     <div
@@ -240,7 +290,7 @@ const MessagePage = () => {
       }}
       className="bg-no-repeat bg-cover"
     >
-      <header className="sticky top-0 h-16 bg-white flex justify-between items-center px-4">
+      <header className="sticky z-50 top-0 h-16 bg-white flex justify-between items-center px-4">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden">
             <FaAngleLeft size={25} />
@@ -294,7 +344,7 @@ const MessagePage = () => {
                   <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
                     <form>
                       <label
-                        onClick={() => alert("we will add this soon")}
+                        onClick={() => handleReply(msg)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
                       >
                         <div className="text-primary">
@@ -302,24 +352,28 @@ const MessagePage = () => {
                         </div>
                         <p>Reply</p>
                       </label>
-                      <label
-                        onClick={() => handleEditText(msg)}
-                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                      >
-                        <div className="text-primary">
-                          <MdModeEditOutline size={20} />
-                        </div>
-                        <p>Edit </p>
-                      </label>
-                      <label
-                        onClick={() => handleDeleteText(msg._id)}
-                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                      >
-                        <div className="text-primary">
-                          <MdDeleteOutline size={20} />
-                        </div>
-                        <p>Delete</p>
-                      </label>
+                      {dataUser?._id !== msg.msgByUserId && (
+                        <label
+                          onClick={() => handleEditText(msg)}
+                          className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                        >
+                          <div className="text-primary">
+                            <MdModeEditOutline size={20} />
+                          </div>
+                          <p>Edit </p>
+                        </label>
+                      )}
+                      {dataUser?._id !== msg.msgByUserId && (
+                        <label
+                          onClick={() => handleDeleteText(msg._id)}
+                          className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                        >
+                          <div className="text-primary">
+                            <MdDeleteOutline size={20} />
+                          </div>
+                          <p>Delete</p>
+                        </label>
+                      )}
                     </form>
                   </div>
                 )}
@@ -331,14 +385,36 @@ const MessagePage = () => {
                     />
                   )}
                 </div>
+                <div className="w-full relative">
+                  {msg?.audioUrl && (
+                    <audio
+                      src={!msg?.isDeleted && msg?.audioUrl}
+                      controls
+                      className="w-60"
+                    />
+                  )}
+                </div>
                 {msg?.isDeleted ? (
                   <p className="px-2 text-gray-400">
                     {"this message hasbeen deleted..."}
                   </p>
+                ) : msg?.replyTo ? (
+                  <>
+                    <div className="border-l-4 border-teal-600 bg-white p-2 rounded mb-2">
+                      <p className="text-xs text-teal-600">Replying to</p>
+                      {msg?.replyTo?.text && <p className="text-sm text-gray-600">
+                        {msg?.replyTo?.text}
+                      </p>}
+                      {msg?.replyTo?.imageUrl && <img className="mt-1 w-36" src={msg?.replyTo?.imageUrl} alt={msg.replyTo._id}/>}
+                      {msg?.replyTo?.audioUrl && <audio className="w-60 mt-1"  controls src={msg?.replyTo?.audioUrl}/>}
+                    </div>
+
+                    <p class="text-base">{msg?.text}</p>
+                  </> 
                 ) : (
-                  <p className="px-2">{msg.text}</p>
+                  <p className="px-2 text-base">{msg.text}</p>
                 )}
-                {!msg?.isDeleted ? (
+                {!msg?.isDeleted && (
                   <div className="flex items-center">
                     <p className="text-xs ml-auto w-fit">
                       {moment(msg.createdAt).format("hh:mm A")}
@@ -354,8 +430,6 @@ const MessagePage = () => {
                       </p>
                     )}
                   </div>
-                ) : (
-                  ""
                 )}
               </div>
             );
@@ -380,6 +454,21 @@ const MessagePage = () => {
             </div>
           </div>
         )}
+        {/**upload Image display */}
+        {audioUrl && (
+          <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
+            <div
+              className="w-fit p-2 absolute top-10 right-10 cursor-pointer hover:text-red-600"
+              onClick={handleClearUploadAudio}
+            >
+              <IoClose size={30} />
+            </div>
+            <div className="p-1">
+              <audio className="w-96 mt-1" controls src={audioUrl} />
+            </div>
+          </div>
+        )}
+
         {loading && (
           <div className="w-full h-full flex sticky bottom-0 justify-center items-center">
             <Loading />
@@ -387,75 +476,144 @@ const MessagePage = () => {
         )}
       </section>
       {/**send message */}
-      <section className="h-16 bg-white flex items-center px-4">
-        <div className="relative ">
-          <button
-            onClick={handleUploadImageVideoOpen}
-            className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-          >
-            {openImageVideoUpload ? (
-              <RxCross2 size={26} />
-            ) : (
-              <FaPlus size={20} />
-            )}
-          </button>
-
-          {/**video and image */}
-          {openImageVideoUpload && (
-            <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
-              <div>
-                <label
-                  htmlFor="uploadImage"
-                  className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                >
-                  <div className="text-primary">
-                    <FaImage size={18} />
-                  </div>
-                  <p>Image</p>
-                </label>
-
-                <input
-                  type="file"
-                  id="uploadImage"
-                  onChange={handleUploadImage}
-                  className="hidden"
+      <div>
+        {/*Reply message UI*/}
+        {replyingMessage && (
+          <div className="px-10 bg-slate-100 flex justify-between items-center ">
+            <button onClick={() => setReplyingMessage(null)}>
+              <RxCross2 size={20} />
+            </button>
+            <div className="m-4 flex items-center justify-between">
+              <h5>Replying to : &nbsp;</h5>
+              {replyingMessage?.text && (
+                <p className="reply-message font-semibold">
+                  {replyingMessage?.text}
+                </p>
+              )}
+              {replyingMessage?.imageUrl && (
+                <img
+                className="w-24"
+                  src={replyingMessage?.imageUrl}
+                  alt={replyingMessage._id}
                 />
-                <hr />
-                <label
-                  onClick={handleOpenCamera}
-                  htmlFor=""
-                  className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                >
-                  <div className="text-primary">
-                    <FaCamera size={18} />
-                  </div>
-                  <p>Camera</p>
-                </label>
-
-                <CameraModal
-                  isOpen={isModalOpen}
-                  onClose={handleCloseModal}
-                  onCapture={handleCapturePhoto}
+              )}
+              {replyingMessage?.audioUrl && (
+                <audio
+                  className="w-60 rounded-md bg-black p-1"
+                  controls
+                  src={replyingMessage?.audioUrl}
                 />
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/**input box */}
-        <form className="h-full w-full flex gap-2" onSubmit={handleSendMessage}>
-          <input
-            type="text"
-            placeholder="Type here message..."
-            className="py-1 px-4 outline-none w-full h-full"
-            value={message.text}
-            onChange={handleOnChange}
-          />
-          <button className="text-primary hover:text-secondary">
-            <IoMdSend size={28} />
-          </button>
-        </form>
-      </section>
+        <section className="h-16 bg-white flex items-center px-4">
+          <div className="relative ">
+            <button
+              onClick={handleUploadImageVideoOpen}
+              className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
+            >
+              {openImageVideoUpload ? (
+                <RxCross2 size={26} />
+              ) : (
+                <FaPlus size={20} />
+              )}
+            </button>
+
+            {/**video and image upload */}
+            {openImageVideoUpload && (
+              <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
+                <div>
+                  <label
+                    htmlFor="uploadImage"
+                    className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                  >
+                    <div className="text-primary">
+                      <FaImage size={18} />
+                    </div>
+                    <p>Image</p>
+                  </label>
+
+                  <input
+                    type="file"
+                    id="uploadImage"
+                    onChange={handleUploadImage}
+                    className="hidden"
+                  />
+                  <hr />
+                  <label
+                    onClick={handleOpenCamera}
+                    htmlFor=""
+                    className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                  >
+                    <div className="text-primary">
+                      <FaCamera size={18} />
+                    </div>
+                    <p>Camera</p>
+                  </label>
+
+                  <CameraModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    onCapture={handleCapturePhoto}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/**input box */}
+          <form
+            className="h-full w-full flex gap-2"
+            onSubmit={handleSendMessage}
+          >
+            {
+              <input
+                type="text"
+                placeholder="Type here message..."
+                className="py-1 px-4 outline-none w-full h-full"
+                value={message.text}
+                onChange={handleOnChange}
+              />
+            }
+            {isRecording && (
+              <div className="relative flex items-center justify-center">
+                <div className="recording-indicator">
+                  <div className="pulse"></div>
+                  <div className="pulse"></div>
+                  <div className="pulse"></div>
+                  <div className="pulse"></div>
+                  <div className="pulse"></div>
+                  <div className="pulse"></div>
+                </div>
+              </div>
+            )}
+
+            {isRecording ? (
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="text-primary hover:text-secondary"
+              >
+                <IoStopCircleOutline size={28} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startRecording}
+                className="text-primary hover:text-secondary"
+              >
+                <IoMdMic size={28} />
+              </button>
+            )}
+
+            <button className="text-primary hover:text-secondary">
+              <IoMdSend size={28} />
+            </button>
+          </form>
+        </section>
+      </div>
     </div>
   );
 };
