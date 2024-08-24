@@ -93,7 +93,7 @@ const Register = () => {
               loading ? "hover:bg-slate-500" : "hover:bg-blue-800"
             } rounded mt-2 font-bold text-white leading-relaxed tracking-wide`}
           >
-            {!loading ? "Checking details..." : "Register"}
+            {loading ? "Checking details..." : "Register"}
           </button>
         </form>
         <p className="my-3 text-center">
