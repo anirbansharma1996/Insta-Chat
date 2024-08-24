@@ -12,8 +12,14 @@ import EditUserDetails from "./EditUser";
 import SearchUser from "./SearchUser";
 import Loading from "./Loading";
 import moment from "moment";
+import { IoMdMic } from "react-icons/io";
 
 const Sidebar = () => {
+  const tk = localStorage.getItem("token");
+  if (!tk) {
+    window.location.href = "/email";
+  }
+
   const user = useSelector((state) => state?.user);
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [openSearchUser, setOpenSearchUser] = useState(false);
@@ -62,7 +68,6 @@ const Sidebar = () => {
     navigate("/email");
     localStorage.removeItem("token");
   };
-
 
   return (
     <div className="w-full h-full grid grid-cols-[48px,1fr] bg-white">
@@ -169,10 +174,25 @@ const Sidebar = () => {
                             {!conv?.lastMsg?.text && <span>Image</span>}
                           </div>
                         )}
+                        {conv?.lastMsg?.audioUrl && (
+                          <div className="flex items-center gap-1">
+                            <span>
+                              <IoMdMic />
+                            </span>
+                            {!conv?.lastMsg?.text && <span>Audio</span>}
+                          </div>
+                        )}
                       </div>
                       <p className="line-clamp-1 text-gray-400">
-                        {!conv?.lastMsg.isDeleted ? conv?.lastMsg?.text : "( This message hasbeen deleted... )"} [{" "}
-                        {!conv?.lastMsg.isDeleted && moment(conv?.lastMsg?.createdAt).format("hh:mm A")} ]
+                        {!conv?.lastMsg.isDeleted
+                          ? conv?.lastMsg?.text
+                          : "( This message hasbeen deleted... )"}{" "}
+                        [{" "}
+                        {!conv?.lastMsg.isDeleted &&
+                          moment(conv?.lastMsg?.createdAt).format(
+                            "hh:mm A"
+                          )}{" "}
+                        ]
                       </p>
                     </div>
                   </div>
