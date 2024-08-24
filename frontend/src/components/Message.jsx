@@ -257,7 +257,9 @@ const MessagePage = () => {
         recorder.ondataavailable = async (event) => {
           if (event.data.size > 0) {
             const audioBlob = event.data;
+            setLoading(true);
             const audioUrl = URL.createObjectURL(audioBlob);
+            setLoading(false);
             const audiodata = await uploadFile(audioBlob);
             setMessage({ ...message, audio: audiodata.url });
             setAudioUrl(audioUrl);
@@ -455,19 +457,7 @@ const MessagePage = () => {
           </div>
         )}
         {/**upload Image display */}
-        {audioUrl && (
-          <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
-            <div
-              className="w-fit p-2 absolute top-10 right-10 cursor-pointer hover:text-red-600"
-              onClick={handleClearUploadAudio}
-            >
-              <IoClose size={30} />
-            </div>
-            <div className="p-1">
-              <audio className="w-96 mt-1" controls src={audioUrl} />
-            </div>
-          </div>
-        )}
+        
 
         {loading && (
           <div className="w-full h-full flex sticky bottom-0 justify-center items-center">
@@ -510,19 +500,19 @@ const MessagePage = () => {
 
         <section className="h-16 bg-white flex items-center px-4">
           <div className="relative ">
-            <button
-              onClick={handleUploadImageVideoOpen}
-              className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-            >
-              {openImageVideoUpload ? (
-                <RxCross2 size={26} />
-              ) : (
-                <FaPlus size={20} />
-              )}
-            </button>
+          {!audioUrl && <button
+            onClick={handleUploadImageVideoOpen}
+            className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
+          >
+            { openImageVideoUpload ? (
+              <RxCross2 size={26} />
+            ) : (
+              <FaPlus size={20} />
+            )}
+          </button>}
 
             {/**video and image upload */}
-            {openImageVideoUpload && (
+            { openImageVideoUpload && (
               <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
                 <div>
                   <label
@@ -568,7 +558,20 @@ const MessagePage = () => {
             className="h-full w-full flex gap-2"
             onSubmit={handleSendMessage}
           >
-            {
+            {audioUrl && (
+          <div className="w-full sticky bottom-0bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
+            <div className="p-3 flex items-center bg-white">
+              <audio className="w-72 mt-1" controls src={audioUrl} />
+            <div
+              className="w-fit p-2  cursor-pointer hover:text-red-600"
+              onClick={handleClearUploadAudio}
+            >
+              <IoClose size={30} />
+            </div>
+            </div>
+          </div>
+        )}
+            {!audioUrl && 
               <input
                 type="text"
                 placeholder="Type here message..."
@@ -599,7 +602,7 @@ const MessagePage = () => {
                 <IoStopCircleOutline size={28} />
               </button>
             ) : (
-              <button
+              !audioUrl && <button
                 type="button"
                 onClick={startRecording}
                 className="text-primary hover:text-secondary"
