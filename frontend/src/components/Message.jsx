@@ -352,7 +352,7 @@ const MessagePage = () => {
                         </div>
                         <p>Reply</p>
                       </label>
-                      {dataUser?._id !== msg.msgByUserId && (
+                      {dataUser?._id !== msg.msgByUserId && !msg.imageUrl && !msg.audioUrl && (
                         <label
                           onClick={() => handleEditText(msg)}
                           className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
