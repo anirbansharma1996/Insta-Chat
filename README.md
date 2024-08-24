@@ -22,6 +22,22 @@ The Insta Chat is a real-time messaging platform that allows users to sign up an
 
 5. **Seen Message Indicator:**
    - Users can see when their messages have been viewed by the recipient, enhancing the communication flow.
+  
+6. **Reply to a Message :**
+   - Users can reply to a particular message.
+
+7. **Upload selfie  :**
+   - Beyond text, users can also share selfie during their chats, adding a visual element to their conversations.
+  
+8. **Edit Text :**
+   - Users can also edit their messages.
+  
+9. **Delete Text :**
+   - Users can also Delete their messages.
+  
+10. **Send Voice Messages :**
+   - Beyond Texts , users can also send Voice messages.
+
 
 ### Technologies Used
 
