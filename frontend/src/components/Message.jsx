@@ -454,7 +454,7 @@ const MessagePage = () => {
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
             <div
-              className="w-fit p-2 absolute top-10 right-24 cursor-pointer hover:text-red-600"
+              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
               onClick={handleClearUploadImage}
             >
               <IoClose size={30} />
@@ -481,9 +481,7 @@ const MessagePage = () => {
         {/*Reply message UI*/}
         {replyingMessage && (
           <div className="px-10 bg-slate-100 flex justify-between items-center ">
-            <button onClick={() => setReplyingMessage(null)}>
-              <RxCross2 size={20} />
-            </button>
+            
             <div className="m-4 flex items-center justify-between">
               {replyingMessage?.text && (
                 <>
@@ -502,12 +500,15 @@ const MessagePage = () => {
               )}
               {replyingMessage?.audioUrl && (
                 <audio
-                  className="w-60 rounded-md bg-black p-1"
+                  className="w-96 p-1"
                   controls
                   src={replyingMessage?.audioUrl}
                 />
               )}
             </div>
+            <button onClick={() => setReplyingMessage(null)}>
+              <RxCross2 size={20} />
+            </button>
           </div>
         )}
 
