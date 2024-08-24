@@ -1,11 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { REACT_APP_BACKEND_URL } from "../../env";
 import { PiUserCircle } from "react-icons/pi";
+import Loading from "../components/Loading";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 
 const CheckEmail = () => {
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     email: "",
   });
@@ -22,6 +24,7 @@ const CheckEmail = () => {
     const URL = `${REACT_APP_BACKEND_URL}/email`;
 
     try {
+      setLoading(true);
       const response = await axios.post(URL, data);
       toast.success(response.data.message);
       if (response.data.success) {
@@ -29,6 +32,7 @@ const CheckEmail = () => {
           email: "",
         });
       }
+      setLoading(false);
       navigate("/password", {
         state: response?.data.data,
       });
@@ -61,8 +65,15 @@ const CheckEmail = () => {
             />
           </div>
 
-          <button className="bg-blue-600 text-lg  px-4 py-1 hover:bg-blue-800 rounded mt-2 font-bold text-white leading-relaxed tracking-wide">
-            Let's Go
+          <button
+            disabled={loading}
+            className={`${
+              loading ? "bg-slate-400" : "bg-blue-600"
+            } text-lg  px-4 py-1 ${
+              loading ? "hover:bg-slate-500" : "hover:bg-blue-800"
+            } rounded mt-2 font-bold text-white leading-relaxed tracking-wide`}
+          >
+            {loading ? "Checking..." : "Let's Go"}
           </button>
         </form>
 

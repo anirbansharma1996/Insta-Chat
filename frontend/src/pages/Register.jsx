@@ -11,6 +11,7 @@ const Register = () => {
     password: "",
   });
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -23,10 +24,11 @@ const Register = () => {
     const URL = `${REACT_APP_BACKEND_URL}/register`;
 
     try {
+      setLoading(true);
       const response = await axios.post(URL, data);
-      //console.log(response)
       toast.success(response.data.message);
       if (response.data.success) {
+        setLoading(false);
         setData({
           name: "",
           email: "",
@@ -35,7 +37,6 @@ const Register = () => {
       }
       navigate("/email");
     } catch (error) {
-      // console.log(error.message);
       toast.error(error?.response?.data?.message);
     }
   };
@@ -84,8 +85,15 @@ const Register = () => {
               required
             />
           </div>
-          <button className="bg-blue-600 text-lg  px-4 py-1 hover:bg-blue-800 rounded mt-2 font-bold text-white leading-relaxed tracking-wide">
-            Register
+          <button
+            disabled={loading}
+            className={`${
+              loading ? "bg-slate-400" : "bg-blue-600"
+            } text-lg  px-4 py-1 ${
+              loading ? "hover:bg-slate-500" : "hover:bg-blue-800"
+            } rounded mt-2 font-bold text-white leading-relaxed tracking-wide`}
+          >
+            {!loading ? "Checking details..." : "Register"}
           </button>
         </form>
         <p className="my-3 text-center">
