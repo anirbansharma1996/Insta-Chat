@@ -454,7 +454,7 @@ const MessagePage = () => {
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
             <div
-              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
+              className="w-fit p-2 absolute top-10 right-24 cursor-pointer hover:text-red-600"
               onClick={handleClearUploadImage}
             >
               <IoClose size={30} />
@@ -463,7 +463,7 @@ const MessagePage = () => {
               <img
                 src={message.imageUrl}
                 alt="uploadImage"
-                className="aspect-auto w-96 h-full max-w-sm m-1  object-scale-down"
+                className="aspect-auto w-72 h-full max-w-sm m-1  object-scale-down"
               />
             </div>
           </div>
