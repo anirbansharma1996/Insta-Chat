@@ -259,9 +259,9 @@ const MessagePage = () => {
             const audioBlob = event.data;
             setLoading(true);
             const audioUrl = URL.createObjectURL(audioBlob);
-            setLoading(false);
             const audiodata = await uploadFile(audioBlob);
             setMessage({ ...message, audio: audiodata.url });
+            setLoading(false);
             setAudioUrl(audioUrl);
           }
         };
@@ -282,8 +282,6 @@ const MessagePage = () => {
       setIsRecording(false);
     }
   };
-
-
 
   return (
     <div
@@ -404,15 +402,29 @@ const MessagePage = () => {
                   <>
                     <div className="border-l-4 border-teal-600 bg-white p-2 rounded mb-2">
                       <p className="text-xs text-teal-600">Replying to</p>
-                      {msg?.replyTo?.text && <p className="text-sm text-gray-600">
-                        {msg?.replyTo?.text}
-                      </p>}
-                      {msg?.replyTo?.imageUrl && <img className="mt-1 w-36" src={msg?.replyTo?.imageUrl} alt={msg.replyTo._id}/>}
-                      {msg?.replyTo?.audioUrl && <audio className="w-60 mt-1"  controls src={msg?.replyTo?.audioUrl}/>}
+                      {msg?.replyTo?.text && (
+                        <p className="text-sm text-gray-600">
+                          {msg?.replyTo?.text}
+                        </p>
+                      )}
+                      {msg?.replyTo?.imageUrl && (
+                        <img
+                          className="mt-1 w-36"
+                          src={msg?.replyTo?.imageUrl}
+                          alt={msg.replyTo._id}
+                        />
+                      )}
+                      {msg?.replyTo?.audioUrl && (
+                        <audio
+                          className="w-60 mt-1"
+                          controls
+                          src={msg?.replyTo?.audioUrl}
+                        />
+                      )}
                     </div>
 
                     <p class="text-base">{msg?.text}</p>
-                  </> 
+                  </>
                 ) : (
                   <p className="px-2 text-base">{msg.text}</p>
                 )}
@@ -457,7 +469,6 @@ const MessagePage = () => {
           </div>
         )}
         {/**upload Image display */}
-        
 
         {loading && (
           <div className="w-full h-full flex sticky bottom-0 justify-center items-center">
@@ -482,7 +493,7 @@ const MessagePage = () => {
               )}
               {replyingMessage?.imageUrl && (
                 <img
-                className="w-24"
+                  className="w-24"
                   src={replyingMessage?.imageUrl}
                   alt={replyingMessage._id}
                 />
@@ -500,19 +511,21 @@ const MessagePage = () => {
 
         <section className="h-16 bg-white flex items-center px-4">
           <div className="relative ">
-          {!audioUrl && <button
-            onClick={handleUploadImageVideoOpen}
-            className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-          >
-            { openImageVideoUpload ? (
-              <RxCross2 size={26} />
-            ) : (
-              <FaPlus size={20} />
+            {!audioUrl && (
+              <button
+                onClick={handleUploadImageVideoOpen}
+                className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
+              >
+                {openImageVideoUpload ? (
+                  <RxCross2 size={26} />
+                ) : (
+                  <FaPlus size={20} />
+                )}
+              </button>
             )}
-          </button>}
 
             {/**video and image upload */}
-            { openImageVideoUpload && (
+            {openImageVideoUpload && (
               <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
                 <div>
                   <label
@@ -559,19 +572,24 @@ const MessagePage = () => {
             onSubmit={handleSendMessage}
           >
             {audioUrl && (
-          <div className="w-full sticky bottom-0bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
-            <div className="p-3 flex items-center bg-white">
-              <audio className="w-72 mt-1" controls src={audioUrl} />
-            <div
-              className="w-fit p-2  cursor-pointer hover:text-red-600"
-              onClick={handleClearUploadAudio}
-            >
-              <IoClose size={30} />
+              <div className="sticky bottom-0 w-full sm:w-96 md:w-80 lg:w-full bg-white bg-opacity-80 flex  items-center p-3">
+              <div className="flex items-center w-full sm:w-96 md:w-80 lg:w-full  rounded overflow-hidden">
+                <audio
+                  className="w-full"
+                  controls
+                  src={audioUrl}
+                />
+                <div
+                  className="ml-3 p-2 cursor-pointer hover:text-red-600"
+                  onClick={handleClearUploadAudio}
+                >
+                  <IoClose size={24} />
+                </div>
+              </div>
             </div>
-            </div>
-          </div>
-        )}
-            {!audioUrl && 
+            
+            )}
+            {!audioUrl && (
               <input
                 type="text"
                 placeholder="Type here message..."
@@ -579,7 +597,7 @@ const MessagePage = () => {
                 value={message.text}
                 onChange={handleOnChange}
               />
-            }
+            )}
             {isRecording && (
               <div className="relative flex items-center justify-center">
                 <div className="recording-indicator">
@@ -602,13 +620,15 @@ const MessagePage = () => {
                 <IoStopCircleOutline size={28} />
               </button>
             ) : (
-              !audioUrl && <button
-                type="button"
-                onClick={startRecording}
-                className="text-primary hover:text-secondary"
-              >
-                <IoMdMic size={28} />
-              </button>
+              !audioUrl && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="text-primary hover:text-secondary"
+                >
+                  <IoMdMic size={28} />
+                </button>
+              )
             )}
 
             <button className="text-primary hover:text-secondary">
