@@ -6,11 +6,13 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import { REACT_APP_BACKEND_URL } from "../../env";
+import { useSelector } from "react-redux";
 
 const SearchUser = ({ onClose }) => {
   const [searchUser, setSearchUser] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const user = useSelector((state) => state?.user);
 
   const handleSearchUser = async () => {
     const URL = `${REACT_APP_BACKEND_URL}/search-user`;
@@ -20,8 +22,10 @@ const SearchUser = ({ onClose }) => {
         search: search,
       });
       setLoading(false);
-
-      setSearchUser(response.data.data);
+      const real_users = response?.data?.data.filter(
+        (el) => el._id !== user._id
+      );
+      setSearchUser(real_users);
     } catch (error) {
       toast.error(error?.response?.data?.message);
     }
@@ -30,6 +34,7 @@ const SearchUser = ({ onClose }) => {
   useEffect(() => {
     handleSearchUser();
   }, [search]);
+
   return (
     <div className="fixed z-50 top-0 bottom-0 left-0 right-0 bg-slate-700 bg-opacity-40 p-2">
       <div className="w-full max-w-lg mx-auto mt-10">
