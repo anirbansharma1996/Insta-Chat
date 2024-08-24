@@ -245,7 +245,7 @@ const MessagePage = () => {
     setReplyingMessage(message);
   };
 
-  // voice record
+  // voice record start
   const startRecording = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
@@ -275,7 +275,7 @@ const MessagePage = () => {
       alert("Audio recording is not supported in this browser.");
     }
   };
-
+// voice record stop
   const stopRecording = () => {
     if (mediaRecorder) {
       mediaRecorder.stop();
@@ -478,7 +478,7 @@ const MessagePage = () => {
         )}
       </section>
       {/**send message */}
-      <div className="sticky bottom-0.5" ref={currentMessage}>
+      <div className="sticky bottom-0.5" >
         {/*Reply message UI*/}
         {replyingMessage && (
           <div className="px-10 bg-slate-100 flex justify-between items-center ">
