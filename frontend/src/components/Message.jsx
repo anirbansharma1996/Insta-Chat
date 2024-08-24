@@ -478,7 +478,7 @@ const MessagePage = () => {
         )}
       </section>
       {/**send message */}
-      <div>
+      <div className="sticky bottom-0.5" ref={currentMessage}>
         {/*Reply message UI*/}
         {replyingMessage && (
           <div className="px-10 bg-slate-100 flex justify-between items-center ">
