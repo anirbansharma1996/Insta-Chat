@@ -485,11 +485,13 @@ const MessagePage = () => {
               <RxCross2 size={20} />
             </button>
             <div className="m-4 flex items-center justify-between">
-              <h5>Replying to : &nbsp;</h5>
               {replyingMessage?.text && (
-                <p className="reply-message font-semibold">
-                  {replyingMessage?.text}
-                </p>
+                <>
+                  <h5>Replying to : &nbsp;</h5>
+                  <p className="reply-message font-semibold">
+                    {replyingMessage?.text}
+                  </p>
+                </>
               )}
               {replyingMessage?.imageUrl && (
                 <img
@@ -573,21 +575,16 @@ const MessagePage = () => {
           >
             {audioUrl && (
               <div className="sticky bottom-0 w-full sm:w-96 md:w-80 lg:w-full bg-white bg-opacity-80 flex  items-center p-3">
-              <div className="flex items-center w-full sm:w-96 md:w-80 lg:w-full  rounded overflow-hidden">
-                <audio
-                  className="w-full"
-                  controls
-                  src={audioUrl}
-                />
-                <div
-                  className="ml-3 p-2 cursor-pointer hover:text-red-600"
-                  onClick={handleClearUploadAudio}
-                >
-                  <IoClose size={24} />
+                <div className="flex items-center w-full sm:w-96 md:w-80 lg:w-full  rounded overflow-hidden">
+                  <audio className="w-full" controls src={audioUrl} />
+                  <div
+                    className="ml-3 p-2 cursor-pointer hover:text-red-600"
+                    onClick={handleClearUploadAudio}
+                  >
+                    <IoClose size={24} />
+                  </div>
                 </div>
               </div>
-            </div>
-            
             )}
             {!audioUrl && (
               <input
