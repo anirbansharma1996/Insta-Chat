@@ -504,7 +504,7 @@ const MessagePage = () => {
               )}
               {replyingMessage?.audioUrl && (
                 <audio
-                  className="w-96 p-1"
+                  className="w-60 p-1"
                   controls
                   src={replyingMessage?.audioUrl}
                 />
