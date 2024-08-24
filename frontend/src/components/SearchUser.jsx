@@ -31,7 +31,7 @@ const SearchUser = ({ onClose }) => {
     handleSearchUser();
   }, [search]);
   return (
-    <div className="fixed top-0 bottom-0 left-0 right-0 bg-slate-700 bg-opacity-40 p-2 z-10">
+    <div className="fixed z-50 top-0 bottom-0 left-0 right-0 bg-slate-700 bg-opacity-40 p-2">
       <div className="w-full max-w-lg mx-auto mt-10">
         <div className="bg-white rounded h-14 overflow-hidden flex ">
           <input
