@@ -341,7 +341,7 @@ const MessagePage = () => {
               >
                 {/* edit and delete message */}
                 {activeMessageId === msg._id && !msg?.isDeleted && (
-                  <div className="bg-white rounded  right-5 bottom-20 w-36 p-2 ease-in">
+                  <div className="bg-white rounded mb-1  right-5 bottom-20 w-36 p-2 ease-in">
                     <form>
                       <label
                         onClick={() => handleReply(msg)}
@@ -390,7 +390,7 @@ const MessagePage = () => {
                     <audio
                       src={!msg?.isDeleted && msg?.audioUrl}
                       controls
-                      className="w-60"
+                      className="w-60 mb-3"
                     />
                   )}
                 </div>
