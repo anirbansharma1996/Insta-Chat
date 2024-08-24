@@ -453,13 +453,14 @@ const MessagePage = () => {
         {/**upload Image display */}
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
-            <div
-              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
-              onClick={handleClearUploadImage}
-            >
-              <IoClose size={30} />
-            </div>
             <div className="bg-white p-1">
+            <div
+              className="w-fit p-2 cursor-pointer hover:text-red-600"
+              onClick={handleClearUploadImage}
+             
+            >
+              <IoClose size={20} />
+            </div>
               <img
                 src={message.imageUrl}
                 alt="uploadImage"
@@ -697,9 +698,9 @@ export function CameraModal({ isOpen, onClose, onCapture }) {
         <div className="relative bg-transparent p-4 rounded-lg backdrop-blur-sm">
           <button
             onClick={closeCamera}
-            className="absolute top-2 right-2 text-black-800"
+            className="absolute top-0 right-2 text-white"
           >
-            ✕
+            <IoClose size={30} />
           </button>
           <video ref={videoRef} className="w-96 h-auto" autoPlay></video>
           <div className="text-center">
