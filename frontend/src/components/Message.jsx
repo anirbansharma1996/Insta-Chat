@@ -493,11 +493,14 @@ const MessagePage = () => {
                 </>
               )}
               {replyingMessage?.imageUrl && (
-                <img
-                  className="w-24"
-                  src={replyingMessage?.imageUrl}
-                  alt={replyingMessage._id}
-                />
+                <>
+                  <h5>Replying to : &nbsp;</h5>
+                  <img
+                    className="w-24"
+                    src={replyingMessage?.imageUrl}
+                    alt={replyingMessage._id}
+                  />
+                </>
               )}
               {replyingMessage?.audioUrl && (
                 <audio
