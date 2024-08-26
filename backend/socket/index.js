@@ -19,16 +19,25 @@ const io = new Server(server, {
 
 // Online users
 const onlineUser = new Set();
+const blockedUsers = new Set();
+const blockedBy = new Set();
 
 io.on("connection", async (socket) => {
   const token = socket.handshake.auth.token;
   const user = await getUserDetailsFromToken(token);
+  const block_users = user.blockedUsers.map((user) => user.toString());
+  const blockedBy_users = user.blockedBy.map((user) => user.toString());
 
   // Create a room for the user
   socket.join(user?._id?.toString());
   onlineUser.add(user?._id?.toString());
 
+  // Update the blockedUsers and blockedBy sets
+  block_users.forEach((userId) => blockedUsers.add(userId));
+  blockedBy_users.forEach((userId) => blockedBy.add(userId));
+
   io.emit("onlineUser", Array.from(onlineUser));
+
 
   socket.on("message-page", async (userId) => {
     const userDetails = await UserModel.findById(userId).select("-password");
@@ -68,6 +77,19 @@ io.on("connection", async (socket) => {
 
   // New message
   socket.on("new message", async (data) => {
+    const sender = await UserModel.findById(data.sender);
+    const receiver = await UserModel.findById(data.receiver);
+
+    // check if the user is blocke
+    if (
+      sender.blockedUsers.includes(data.reciver) ||
+      receiver.blockedUsers.includes(data.sender)
+    ) {
+      socket.emit("message-blocked", "You cann't send message");
+      return;
+    }
+
+    // if not blocked start chatting
     let conversation = await Conversation.findOne({
       $or: [
         { sender: data?.sender, receiver: data?.receiver },
@@ -127,6 +149,38 @@ io.on("connection", async (socket) => {
 
     io.to(data?.sender).emit("conversation", conversationSender);
     io.to(data?.receiver).emit("conversation", conversationReceiver);
+  });
+  // block/unblock users
+
+  socket.on("block-user", async (blockedUserId) => {
+    try {
+      await UserModel.findByIdAndUpdate(user._id, {
+        $addToSet: { blockedUsers: blockedUserId },
+      });
+      await UserModel.findByIdAndUpdate(blockedUserId, {
+        $addToSet: { blockedBy: user._id },
+      });
+      io.to(blockedUserId).emit("block-success", {message : "user blocked successfully",blockedUserId:blockedUserId});
+      socket.emit("block-success", {message : "user blocked successfully"});
+
+    } catch (error) {
+      socket.emit("block-falied", error.message);
+    }
+  });
+
+  socket.on("unblock-user", async (unblockUserId) => {
+    try {
+      await UserModel.findByIdAndUpdate(user._id, {
+        $pull: { blockedUsers: unblockUserId },
+      });
+      await UserModel.findByIdAndUpdate(unblockUserId, {
+        $pull: { blockedBy: user._id },
+      });
+      io.to(unblockUserId).emit("unblock-success", {message : "user unblocked successfully",unblockUserId:unblockUserId});
+      socket.emit("unblock-success", {message : "user unblocked successfully"});
+    } catch (error) {
+      socket.emit("unblock-failed", error.message);
+    }
   });
 
   // Sidebar update
@@ -250,7 +304,6 @@ io.on("connection", async (socket) => {
             : conversation.sender;
 
         io.to(otherUser.toString()).emit("message", conversation.messages);
-
         socket.emit("delete-success", { messageId });
       } else {
         socket.emit("delete-failure", { error: "Message not found" });

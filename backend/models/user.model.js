@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model, default: mongoose } = require("mongoose");
 
 const UserSchema = new Schema(
   {
@@ -19,6 +19,18 @@ const UserSchema = new Schema(
       type: String,
       default: "",
     },
+    blockedUsers: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "users",
+      },
+    ],
+    blockedBy: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "users",
+      },
+    ],
   },
   { timestamps: true }
 );

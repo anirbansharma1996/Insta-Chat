@@ -8,6 +8,8 @@ const initialState = {
   token: "",
   onlineUser: [],
   socketConnection: null,
+  blockedUsers: [],
+  blockedBy: [],
 };
 
 export const userSlice = createSlice({
@@ -19,6 +21,8 @@ export const userSlice = createSlice({
       state.name = action.payload.name;
       state.email = action.payload.email;
       state.profile_pic = action.payload.profile_pic;
+      state.blockedUsers = action.payload.blockedUsers;
+      state.blockedBy = action.payload.blockedBy;
     },
     setToken: (state, action) => {
       state.token = action.payload;
@@ -39,7 +43,12 @@ export const userSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, logout, setOnlineUser, setSocketConnection } =
-  userSlice.actions;
+export const {
+  setUser,
+  setToken,
+  logout,
+  setOnlineUser,
+  setSocketConnection,
+} = userSlice.actions;
 
 export default userSlice.reducer;

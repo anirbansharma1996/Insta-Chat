@@ -14,7 +14,12 @@ import moment from "moment";
 import { MdDone } from "react-icons/md";
 import { IoCheckmarkDone, IoStopCircleOutline } from "react-icons/io5";
 import { FaCamera } from "react-icons/fa";
-import { MdModeEditOutline, MdDeleteOutline } from "react-icons/md";
+import { CgUnblock } from "react-icons/cg";
+import {
+  MdModeEditOutline,
+  MdDeleteOutline,
+  MdOutlineBlock,
+} from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { MdOutlineReply } from "react-icons/md";
 
@@ -48,6 +53,7 @@ const MessagePage = () => {
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
   const currentMessage = useRef(null);
+  const [blockModal, setBlockModal] = useState(false);
 
   // open camera modal
   const handleOpenCamera = () => {
@@ -164,14 +170,16 @@ const MessagePage = () => {
         setAllMessage(data);
       });
       socketConnection.on("display", (data) => {
-        if (data.typing) {
-          setIsTyping(true);
-        } else {
-          setIsTyping(false);
-        }
+        setIsTyping(data.typing ? true : false);
+      });
+      socketConnection.on("block-success", ({ message }) => {
+        if (message) window.location.reload();
+      });
+      socketConnection.on("unblock-success", ({ message }) => {
+        if (message) window.location.reload();
       });
     }
-  }, [socketConnection, params?.userId, user]);
+  }, [socketConnection, params?.userId, user ]);
 
   // input taking
   const handleOnChange = (e) => {
@@ -275,13 +283,34 @@ const MessagePage = () => {
       alert("Audio recording is not supported in this browser.");
     }
   };
-// voice record stop
+  // voice record stop
   const stopRecording = () => {
     if (mediaRecorder) {
       mediaRecorder.stop();
       setIsRecording(false);
     }
   };
+
+  // open block / unblock user modal
+  const handleBlockUnblockUser = () => {
+    setBlockModal(!blockModal);
+  };
+  // block and unblock user
+  const handleBlockFn = (B_id) => {
+    if (socketConnection) {
+      socketConnection.emit("block-user", B_id);
+    }
+    setBlockModal(!blockModal);
+  
+  };
+
+  const handleUnblockFn = (u_id) => {
+    if (socketConnection) {
+      socketConnection.emit("unblock-user", u_id);
+    }
+    setBlockModal(!blockModal);
+  };
+
 
   return (
     <div
@@ -319,10 +348,41 @@ const MessagePage = () => {
             </p>
           </div>
         </div>
-        <div>
-          {/* <button className="cursor-pointer hover:text-primary">
-            <HiDotsVertical />
-          </button> */}
+        <div className="relative">
+          <button
+            onClick={handleBlockUnblockUser}
+            className="cursor-pointer hover:text-primary"
+          >
+            {!blockModal ? <HiDotsVertical /> : <RxCross2 size={24} />}
+          </button>
+          {/* block  and unblock user */}
+          {blockModal && (
+            <div className="absolute rounded bg-gray-100 mb-1 top-7 -right-2 w-36 p-2 ease-in">
+              <form>
+                {user.blockedUsers.includes(dataUser._id) ? (
+                  <label
+                    onClick={() => handleUnblockFn(dataUser?._id, user._id)}
+                    className="flex items-center p-2 px-3 gap-3 hover:bg-gray-300 cursor-pointer"
+                  >
+                    <div className="text-primary">
+                      <CgUnblock size={28} />
+                    </div>
+                    <p>Unblock</p>
+                  </label>
+                ) : (
+                  <label
+                    onClick={() => handleBlockFn(dataUser?._id)}
+                    className="flex items-center p-2 px-3 gap-3 hover:bg-gray-300 cursor-pointer"
+                  >
+                    <div className="text-primary">
+                      <MdOutlineBlock size={20} />
+                    </div>
+                    <p>Block</p>
+                  </label>
+                )}
+              </form>
+            </div>
+          )}
         </div>
       </header>
       {/***show all message */}
@@ -352,17 +412,19 @@ const MessagePage = () => {
                         </div>
                         <p>Reply</p>
                       </label>
-                      {dataUser?._id !== msg.msgByUserId && !msg.imageUrl && !msg.audioUrl && (
-                        <label
-                          onClick={() => handleEditText(msg)}
-                          className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                        >
-                          <div className="text-primary">
-                            <MdModeEditOutline size={20} />
-                          </div>
-                          <p>Edit </p>
-                        </label>
-                      )}
+                      {dataUser?._id !== msg.msgByUserId &&
+                        !msg.imageUrl &&
+                        !msg.audioUrl && (
+                          <label
+                            onClick={() => handleEditText(msg)}
+                            className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                          >
+                            <div className="text-primary">
+                              <MdModeEditOutline size={20} />
+                            </div>
+                            <p>Edit </p>
+                          </label>
+                        )}
                       {dataUser?._id !== msg.msgByUserId && (
                         <label
                           onClick={() => handleDeleteText(msg._id)}
@@ -454,13 +516,12 @@ const MessagePage = () => {
         {message.imageUrl && (
           <div className="w-full h-full sticky bottom-0 bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
             <div className="bg-white p-1">
-            <div
-              className="w-fit p-2 cursor-pointer hover:text-red-600"
-              onClick={handleClearUploadImage}
-             
-            >
-              <IoClose size={20} />
-            </div>
+              <div
+                className="w-fit p-2 cursor-pointer hover:text-red-600"
+                onClick={handleClearUploadImage}
+              >
+                <IoClose size={20} />
+              </div>
               <img
                 src={message.imageUrl}
                 alt="uploadImage"
@@ -478,11 +539,10 @@ const MessagePage = () => {
         )}
       </section>
       {/**send message */}
-      <div className="sticky bottom-0.5" >
+      <div className="sticky bottom-0.5">
         {/*Reply message UI*/}
         {replyingMessage && (
           <div className="px-10 bg-slate-100 flex justify-between items-center ">
-            
             <div className="m-4 flex items-center justify-between">
               {replyingMessage?.text && (
                 <>
@@ -517,126 +577,134 @@ const MessagePage = () => {
         )}
 
         <section className="h-16 bg-white flex items-center px-4">
-          <div className="relative ">
-            {!audioUrl && (
-              <button
-                onClick={handleUploadImageVideoOpen}
-                className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-              >
-                {openImageVideoUpload ? (
-                  <RxCross2 size={26} />
-                ) : (
-                  <FaPlus size={20} />
+          { user?.blockedUsers.includes(dataUser._id) ||
+          user?.blockedBy.includes(dataUser._id) ? (
+            <p className="text-gray-400">
+              <i>You have blocked </i>{" "}
+            </p>
+          ) : (
+            <>
+              <div className="relative ">
+                {!audioUrl && (
+                  <button
+                    onClick={handleUploadImageVideoOpen}
+                    className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
+                  >
+                    {openImageVideoUpload ? (
+                      <RxCross2 size={26} />
+                    ) : (
+                      <FaPlus size={20} />
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
 
-            {/**video and image upload */}
-            {openImageVideoUpload && (
-              <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
-                <div>
-                  <label
-                    htmlFor="uploadImage"
-                    className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                  >
-                    <div className="text-primary">
-                      <FaImage size={18} />
+                {/**video and image upload */}
+                {openImageVideoUpload && (
+                  <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2">
+                    <div>
+                      <label
+                        htmlFor="uploadImage"
+                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <div className="text-primary">
+                          <FaImage size={18} />
+                        </div>
+                        <p>Image</p>
+                      </label>
+
+                      <input
+                        type="file"
+                        id="uploadImage"
+                        onChange={handleUploadImage}
+                        className="hidden"
+                      />
+                      <hr />
+                      <label
+                        onClick={handleOpenCamera}
+                        htmlFor=""
+                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                      >
+                        <div className="text-primary">
+                          <FaCamera size={18} />
+                        </div>
+                        <p>Camera</p>
+                      </label>
+
+                      <CameraModal
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModal}
+                        onCapture={handleCapturePhoto}
+                      />
                     </div>
-                    <p>Image</p>
-                  </label>
-
-                  <input
-                    type="file"
-                    id="uploadImage"
-                    onChange={handleUploadImage}
-                    className="hidden"
-                  />
-                  <hr />
-                  <label
-                    onClick={handleOpenCamera}
-                    htmlFor=""
-                    className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                  >
-                    <div className="text-primary">
-                      <FaCamera size={18} />
-                    </div>
-                    <p>Camera</p>
-                  </label>
-
-                  <CameraModal
-                    isOpen={isModalOpen}
-                    onClose={handleCloseModal}
-                    onCapture={handleCapturePhoto}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/**input box */}
-          <form
-            className="h-full w-full flex gap-2"
-            onSubmit={handleSendMessage}
-          >
-            {audioUrl && (
-              <div className="sticky bottom-0 w-full sm:w-96 md:w-80 lg:w-full bg-white bg-opacity-80 flex  items-center p-3">
-                <div className="flex items-center w-full sm:w-96 md:w-80 lg:w-full  rounded overflow-hidden">
-                  <audio className="w-full" controls src={audioUrl} />
-                  <div
-                    className="ml-3 p-2 cursor-pointer hover:text-red-600"
-                    onClick={handleClearUploadAudio}
-                  >
-                    <IoClose size={24} />
                   </div>
-                </div>
+                )}
               </div>
-            )}
-            {!audioUrl && (
-              <input
-                type="text"
-                placeholder="Type here message..."
-                className="py-1 px-4 outline-none w-full h-full"
-                value={message.text}
-                onChange={handleOnChange}
-              />
-            )}
-            {isRecording && (
-              <div className="relative flex items-center justify-center">
-                <div className="recording-indicator">
-                  <div className="pulse"></div>
-                  <div className="pulse"></div>
-                  <div className="pulse"></div>
-                  <div className="pulse"></div>
-                  <div className="pulse"></div>
-                  <div className="pulse"></div>
-                </div>
-              </div>
-            )}
-
-            {isRecording ? (
-              <button
-                type="button"
-                onClick={stopRecording}
-                className="text-primary hover:text-secondary"
+              {/**input box */}
+              <form
+                className="h-full w-full flex gap-2"
+                onSubmit={handleSendMessage}
               >
-                <IoStopCircleOutline size={28} />
-              </button>
-            ) : (
-              !audioUrl && (
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="text-primary hover:text-secondary"
-                >
-                  <IoMdMic size={28} />
-                </button>
-              )
-            )}
+                {audioUrl && (
+                  <div className="sticky bottom-0 w-full sm:w-96 md:w-80 lg:w-full bg-white bg-opacity-80 flex  items-center p-3">
+                    <div className="flex items-center w-full sm:w-96 md:w-80 lg:w-full  rounded overflow-hidden">
+                      <audio className="w-full" controls src={audioUrl} />
+                      <div
+                        className="ml-3 p-2 cursor-pointer hover:text-red-600"
+                        onClick={handleClearUploadAudio}
+                      >
+                        <IoClose size={24} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {!audioUrl && (
+                  <input
+                    type="text"
+                    placeholder="Type here message..."
+                    className="py-1 px-4 outline-none w-full h-full"
+                    value={message.text}
+                    onChange={handleOnChange}
+                  />
+                )}
+                {isRecording && (
+                  <div className="relative flex items-center justify-center">
+                    <div className="recording-indicator">
+                      <div className="pulse"></div>
+                      <div className="pulse"></div>
+                      <div className="pulse"></div>
+                      <div className="pulse"></div>
+                      <div className="pulse"></div>
+                      <div className="pulse"></div>
+                    </div>
+                  </div>
+                )}
 
-            <button className="text-primary hover:text-secondary">
-              <IoMdSend size={28} />
-            </button>
-          </form>
+                {isRecording ? (
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    className="text-primary hover:text-secondary"
+                  >
+                    <IoStopCircleOutline size={28} />
+                  </button>
+                ) : (
+                  !audioUrl && (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      className="text-primary hover:text-secondary"
+                    >
+                      <IoMdMic size={28} />
+                    </button>
+                  )
+                )}
+
+                <button className="text-primary hover:text-secondary">
+                  <IoMdSend size={28} />
+                </button>
+              </form>
+            </>
+          )}
         </section>
       </div>
     </div>
