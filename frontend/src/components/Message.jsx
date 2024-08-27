@@ -350,13 +350,23 @@ const MessagePage = () => {
             <FaAngleLeft size={25} />
           </Link>
           <div>
-            <Avatar
-              width={50}
-              height={50}
-              imageUrl={dataUser?.profile_pic}
-              name={dataUser?.name}
-              userId={dataUser?._id}
-            />
+            {user?.blockedBy.includes(dataUser._id) ? (
+              <img
+                width={50}
+                height={50}
+                className="rounded-full"
+                src="https://i.pinimg.com/originals/87/14/55/8714556a52021ba3a55c8e7a3547d28c.png"
+                alt="blocked"
+              />
+            ) : (
+              <Avatar
+                width={50}
+                height={50}
+                imageUrl={dataUser?.profile_pic}
+                name={dataUser?.name}
+                userId={dataUser?._id}
+              />
+            )}
           </div>
           <div>
             <h3 className="font-semibold text-lg my-0 text-ellipsis line-clamp-1">
@@ -364,9 +374,19 @@ const MessagePage = () => {
             </h3>
             <p className="-my-2 text-sm">
               {!isTyping && dataUser.online ? (
-                <span className="text-primary">online</span>
+                <span className="text-primary">
+                  {user?.blockedUsers.includes(dataUser._id) ||
+                  user?.blockedBy.includes(dataUser._id)
+                    ? ""
+                    : "online"}
+                </span>
               ) : isTyping ? (
-                <span className="text-slate-400">typing...</span>
+                <span className="text-slate-400">
+                   {user?.blockedUsers.includes(dataUser._id) ||
+                  user?.blockedBy.includes(dataUser._id)
+                    ? ""
+                    : "typing..."}
+                </span>
               ) : (
                 <span className="text-slate-400"></span>
               )}
@@ -595,7 +615,10 @@ const MessagePage = () => {
               )}
             </div>
             <div>
-              <button onClick={() => handleAiReply(replyingMessage?.text)} className="hover:bg-gray-300 px-2 py-1">
+              <button
+                onClick={() => handleAiReply(replyingMessage?.text)}
+                className="hover:bg-gray-300 px-2 py-1"
+              >
                 <RiRobot3Line size={20} className="text-red-700" />
               </button>
               &nbsp;&nbsp;&nbsp;
@@ -612,11 +635,11 @@ const MessagePage = () => {
             e.target.style.height = "auto";
             e.target.style.height = `${e.target.scrollHeight}px`;
           }}
-          style={{height: 'auto'}}
+          style={{ height: "auto" }}
         >
           {user?.blockedUsers.includes(dataUser._id) ||
           user?.blockedBy.includes(dataUser._id) ? (
-            <p className="text-gray-400">
+            <p className="text-gray-400 pb-4 text-center w-full">
               <i>You have blocked </i>{" "}
             </p>
           ) : (
@@ -707,7 +730,6 @@ const MessagePage = () => {
                       e.target.style.height = "auto";
                       e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
-                   
                   />
                 )}
                 {isRecording && (
