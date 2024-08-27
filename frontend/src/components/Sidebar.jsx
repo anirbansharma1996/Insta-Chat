@@ -13,6 +13,8 @@ import SearchUser from "./SearchUser";
 import Loading from "./Loading";
 import moment from "moment";
 import { IoMdMic } from "react-icons/io";
+import { MdFeaturedVideo } from "react-icons/md";
+
 
 const Sidebar = () => {
   const tk = localStorage.getItem("token");
@@ -63,8 +65,6 @@ const Sidebar = () => {
     }
   }, [socketConnection, user]);
 
-
-
   const handleLogout = () => {
     dispatch(logout());
     navigate("/email");
@@ -92,6 +92,9 @@ const Sidebar = () => {
             className="w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-slate-200 rounded"
           >
             <FaUserPlus size={20} />
+          </div>
+          <div onClick={()=>navigate("/features")} className="w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-slate-200 rounded">
+            <MdFeaturedVideo size={20} />
           </div>
         </div>
 

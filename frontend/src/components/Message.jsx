@@ -14,7 +14,9 @@ import moment from "moment";
 import { MdDone } from "react-icons/md";
 import { IoCheckmarkDone, IoStopCircleOutline } from "react-icons/io5";
 import { FaCamera } from "react-icons/fa";
+import { RiRobot3Line } from "react-icons/ri";
 import { CgUnblock } from "react-icons/cg";
+import axios from "axios";
 import {
   MdModeEditOutline,
   MdDeleteOutline,
@@ -22,6 +24,8 @@ import {
 } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { MdOutlineReply } from "react-icons/md";
+import { REACT_APP_BACKEND_URL } from "../../env";
+import toast from "react-hot-toast";
 
 const MessagePage = () => {
   const params = useParams();
@@ -54,6 +58,7 @@ const MessagePage = () => {
   const [audioUrl, setAudioUrl] = useState(null);
   const currentMessage = useRef(null);
   const [blockModal, setBlockModal] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // open camera modal
   const handleOpenCamera = () => {
@@ -179,7 +184,7 @@ const MessagePage = () => {
         if (message) window.location.reload();
       });
     }
-  }, [socketConnection, params?.userId, user ]);
+  }, [socketConnection, params?.userId, user]);
 
   // input taking
   const handleOnChange = (e) => {
@@ -301,7 +306,6 @@ const MessagePage = () => {
       socketConnection.emit("block-user", B_id);
     }
     setBlockModal(!blockModal);
-  
   };
 
   const handleUnblockFn = (u_id) => {
@@ -311,6 +315,27 @@ const MessagePage = () => {
     setBlockModal(!blockModal);
   };
 
+  // reply with AI
+  const handleAiReply = async (query) => {
+    try {
+      setAiLoading(true);
+      const res = await axios.post(`${REACT_APP_BACKEND_URL}/prompt`, {
+        prompt: query,
+      });
+      if (res.status == 200) {
+        setMessage((preve) => {
+          return {
+            ...preve,
+            text: res.data.answer,
+          };
+        });
+        setAiLoading(false);
+      }
+    } catch (error) {
+      setAiLoading(false);
+      toast.error("Cann't reply with AI");
+    }
+  };
 
   return (
     <div
@@ -484,7 +509,6 @@ const MessagePage = () => {
                         />
                       )}
                     </div>
-
                     <p class="text-base">{msg?.text}</p>
                   </>
                 ) : (
@@ -570,14 +594,27 @@ const MessagePage = () => {
                 />
               )}
             </div>
-            <button onClick={() => setReplyingMessage(null)}>
-              <RxCross2 size={20} />
-            </button>
+            <div>
+              <button onClick={() => handleAiReply(replyingMessage?.text)}>
+                <RiRobot3Line size={20} />
+              </button>
+              &nbsp;&nbsp;&nbsp;
+              <button onClick={() => setReplyingMessage(null)}>
+                <RxCross2 size={22} />
+              </button>
+            </div>
           </div>
         )}
 
-        <section className="h-16 bg-white flex items-center px-4">
-          { user?.blockedUsers.includes(dataUser._id) ||
+        <section
+          className=" bg-white flex items-center px-4 pb-5"
+          onInput={(e) => {
+            e.target.style.height = "auto";
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
+          style={{height: 'auto'}}
+        >
+          {user?.blockedUsers.includes(dataUser._id) ||
           user?.blockedBy.includes(dataUser._id) ? (
             <p className="text-gray-400">
               <i>You have blocked </i>{" "}
@@ -658,12 +695,19 @@ const MessagePage = () => {
                   </div>
                 )}
                 {!audioUrl && (
-                  <input
-                    type="text"
-                    placeholder="Type here message..."
-                    className="py-1 px-4 outline-none w-full h-full"
+                  <textarea
+                    placeholder={
+                      aiLoading ? "AI is thinking..." : "Type here message..."
+                    }
+                    className="z-50 py-2 px-4 outline-none w-full resize-none overflow-hidden rounded-lg "
                     value={message.text}
                     onChange={handleOnChange}
+                    rows={1}
+                    onInput={(e) => {
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${e.target.scrollHeight}px`;
+                    }}
+                   
                   />
                 )}
                 {isRecording && (
