@@ -595,8 +595,8 @@ const MessagePage = () => {
               )}
             </div>
             <div>
-              <button onClick={() => handleAiReply(replyingMessage?.text)}>
-                <RiRobot3Line size={20} />
+              <button onClick={() => handleAiReply(replyingMessage?.text)} className="hover:bg-gray-300 px-2 py-1">
+                <RiRobot3Line size={20} className="text-red-700" />
               </button>
               &nbsp;&nbsp;&nbsp;
               <button onClick={() => setReplyingMessage(null)}>

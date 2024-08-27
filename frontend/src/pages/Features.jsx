@@ -29,7 +29,7 @@ const Features = () => {
         {featuresList.map((feature, index) => (
           <li
             key={index}
-            className="flex items-center text-lg text-gray-800 p-3 bg-blue-50 rounded-lg shadow-md hover:bg-blue-100 transition-colors"
+            className="flex items-center text-sm text-gray-800 p-3 bg-blue-50 rounded-lg shadow-md hover:bg-blue-100 transition-colors"
           >
             <span className="mr-3 text-blue-500">{index + 1}.</span> {feature}
           </li>
