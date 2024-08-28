@@ -14,48 +14,54 @@ import Loading from "./Loading";
 import moment from "moment";
 import { IoMdMic } from "react-icons/io";
 import { MdFeaturedVideo } from "react-icons/md";
-
+import {jwtDecode} from "jwt-decode";
 
 const Sidebar = () => {
-  const tk = localStorage.getItem("token");
-  if (!tk) {
-    window.location.href = "/email";
-  }
-
-  const user = useSelector((state) => state?.user);
+  const [loginUser, setLoginUser] = useState(null);
   const [editUserOpen, setEditUserOpen] = useState(false);
   const [openSearchUser, setOpenSearchUser] = useState(false);
   const [allUser, setAllUser] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const socketConnection = useSelector(
-    (state) => state?.user?.socketConnection
-  );
+  const user = useSelector((state) => state?.user);
+  const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/email";
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      setLoginUser(decoded);
+
+      if (decoded.exp < Date.now() / 1000) {
+        handleLogout();
+      } else {
+        const expInMs = (decoded.exp - Date.now() / 1000) * 1000;
+        setTimeout(handleLogout, expInMs);
+      }
+    } catch (error) {
+      console.error("Invalid token", error);
+      handleLogout();
+    }
+  }, []);
+
+  useEffect(() => {
     setIsLoading(true);
-    if (socketConnection) {
+    if (socketConnection && loginUser) {
       socketConnection.emit("sidebar", user._id);
       socketConnection.on("conversation", (data) => {
-        const conversationUserData = data.map((conversationUser, index) => {
-          if (
-            conversationUser?.sender?._id === conversationUser?.receiver?._id
-          ) {
-            return {
-              ...conversationUser,
-              userDetails: conversationUser?.sender,
-            };
+        const conversationUserData = data.map((conversationUser) => {
+          if (conversationUser?.sender?._id === conversationUser?.receiver?._id) {
+            return { ...conversationUser, userDetails: conversationUser?.sender };
           } else if (conversationUser?.receiver?._id !== user?._id) {
-            return {
-              ...conversationUser,
-              userDetails: conversationUser.receiver,
-            };
+            return { ...conversationUser, userDetails: conversationUser.receiver };
           } else {
-            return {
-              ...conversationUser,
-              userDetails: conversationUser.sender,
-            };
+            return { ...conversationUser, userDetails: conversationUser.sender };
           }
         });
 
@@ -63,7 +69,7 @@ const Sidebar = () => {
         setIsLoading(false);
       });
     }
-  }, [socketConnection, user]);
+  }, [socketConnection, user, loginUser]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -93,7 +99,10 @@ const Sidebar = () => {
           >
             <FaUserPlus size={20} />
           </div>
-          <div onClick={()=>navigate("/features")} className="w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-slate-200 rounded">
+          <div
+            onClick={() => navigate("/features")}
+            className="w-12 h-12 flex justify-center items-center cursor-pointer hover:bg-slate-200 rounded"
+          >
             <MdFeaturedVideo size={20} />
           </div>
         </div>
@@ -191,7 +200,7 @@ const Sidebar = () => {
                       <p className="line-clamp-1 text-gray-400">
                         {!conv?.lastMsg.isDeleted
                           ? conv?.lastMsg?.text
-                          : "( This message hasbeen deleted... )"}{" "}
+                          : "( This message has been deleted... )"}{" "}
                         [{" "}
                         {!conv?.lastMsg.isDeleted &&
                           moment(conv?.lastMsg?.createdAt).format(
