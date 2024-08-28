@@ -23,7 +23,20 @@ const generationConfig = {
 async function run(query) {
   const chatSession = model.startChat({
     generationConfig,
-    history: [],
+    history: [
+      {
+        role: "user",
+        parts: [
+          {text: "i am goining to use you in my chat application , think youself a human friend , who will reply never as a machine , but as a human always , who will understand the emotions of the messages , and will generate response for it in 100% humanly way . the outputs will be short and really simple"},
+        ],
+      },
+      {
+        role: "model",
+        parts: [
+          {text: "Sounds exciting! I'm ready to be your chat buddy. 😊 Tell me, what's on your mind? I'll try my best to be a good friend and understand your emotions. Just keep it short and simple, and I'll do the same. 🤝 \n"},
+        ],
+      },
+    ],
   });
 
   const result = await chatSession.sendMessage(query);
@@ -31,3 +44,5 @@ async function run(query) {
 }
 
 module.exports = run;
+
+
