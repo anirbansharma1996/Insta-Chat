@@ -68,7 +68,7 @@ const Header = ({
         </div>
       </div>
       <div className=" flex justify-between items-center relative">
-        <button onClick={()=> alert('lAUNCHING SOON !!')}>
+        <button onClick={()=> alert('LAUNCHING SOON !!')}>
           <FaVideo size={20} />
         </button>
         &nbsp;&nbsp;&nbsp;&nbsp;
