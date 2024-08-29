@@ -18,6 +18,10 @@ const MessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
     isDelivered: {
       type: Boolean,
       default: false,

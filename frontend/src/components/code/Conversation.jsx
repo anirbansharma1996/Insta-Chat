@@ -123,6 +123,7 @@ const Conversation = ({
             {!msg?.isDeleted && (
               <div className="flex items-center">
                 <p className="text-xs ml-auto w-fit">
+                  {msg.isEdited && "Edited"} &nbsp;
                   {moment(msg.createdAt).format("hh:mm A")}
                 </p>
                 &nbsp;

@@ -245,6 +245,7 @@ io.on("connection", async (socket) => {
           $set: {
             text: newText,
             imageUrl: newImageUrl,
+            isEdited : true
           },
         },
         { new: true }
