@@ -304,7 +304,7 @@ const useChatLogic = () => {
       const res = await axios.post(`${REACT_APP_BACKEND_URL}/prompt`, {
         prompt: query,
       });
-      console.log(res);
+  
       if (res.status == 200) {
         setMessage((preve) => {
           return {
