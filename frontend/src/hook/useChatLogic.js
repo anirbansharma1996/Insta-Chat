@@ -309,15 +309,14 @@ const useChatLogic = () => {
         setMessage((preve) => {
           return {
             ...preve,
-            text: res.data.answer,
+            text: res.data.answer.replace(/\n/g, ""),
           };
         });
         setAiLoading(false);
       }
     } catch (error) {
-
       setAiLoading(false);
-      toast.error("Cann't reply with AI");
+      toast.error("AI currently unavailable");
     }
   };
 
