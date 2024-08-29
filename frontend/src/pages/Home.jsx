@@ -4,12 +4,7 @@ import axios from "axios";
 import { REACT_APP_BACKEND_URL } from "../../env.js";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  logout,
-  setOnlineUser,
-  setSocketConnection,
-  setUser,
-} from "../redux/userSlice.js";
+import { logout, setOnlineUser, setSocketConnection, setUser } from "../redux/userSlice.js";
 import Sidebar from "../components/Sidebar.jsx";
 import io from "socket.io-client";
 

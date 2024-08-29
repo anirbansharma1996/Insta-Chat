@@ -64,7 +64,6 @@ const Sidebar = () => {
             return { ...conversationUser, userDetails: conversationUser.sender };
           }
         });
-
         setAllUser(conversationUserData);
         setIsLoading(false);
       });
@@ -76,6 +75,8 @@ const Sidebar = () => {
     navigate("/email");
     localStorage.removeItem("token");
   };
+
+
 
   return (
     <div className="w-full h-full grid grid-cols-[48px,1fr] bg-white">

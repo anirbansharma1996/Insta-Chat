@@ -6,6 +6,7 @@ import { MdOutlineBlock } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { HiDotsVertical } from "react-icons/hi";
 import { CgUnblock } from "react-icons/cg";
+import { FaVideo } from "react-icons/fa";
 
 const Header = ({
   user,
@@ -66,7 +67,11 @@ const Header = ({
           </p>
         </div>
       </div>
-      <div className="relative">
+      <div className=" flex justify-between items-center relative">
+        <button onClick={()=> alert('lAUNCHING SOON !!')}>
+          <FaVideo size={20} />
+        </button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
         <button
           onClick={handleBlockUnblockUser}
           className="cursor-pointer hover:text-primary"

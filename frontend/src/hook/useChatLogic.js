@@ -6,24 +6,27 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import uploadFile from "../helpers/uploadFile";
 
+const inititalState = {
+  name: "",
+  email: "",
+  profile_pic: "",
+  online: false,
+  _id: "",
+}
+const messageState = {
+  text: "",
+  imageUrl: "",
+}
+
 const useChatLogic = () => {
   const params = useParams();
   const socketConnection = useSelector(
     (state) => state?.user?.socketConnection
   );
   const user = useSelector((state) => state?.user);
-  const [dataUser, setDataUser] = useState({
-    name: "",
-    email: "",
-    profile_pic: "",
-    online: false,
-    _id: "",
-  });
+  const [dataUser, setDataUser] = useState(inititalState);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
-  const [message, setMessage] = useState({
-    text: "",
-    imageUrl: "",
-  });
+  const [message, setMessage] = useState(messageState);
   const [loading, setLoading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
   const [editingMessageId, setEditingMessageId] = useState(null);

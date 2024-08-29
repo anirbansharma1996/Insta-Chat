@@ -1,7 +1,5 @@
 import React from "react";
-import { FaPlus } from "react-icons/fa6";
 import Loading from "./Loading";
-import { RxCross2 } from "react-icons/rx";
 import MessageInput from "./code/MessageInput";
 import Header from "./code/Header";
 import ReplyingMessage from "./code/ReplyingMessage";
@@ -9,6 +7,8 @@ import Conversation from "./code/Conversation";
 import ImageModal from "./code/ImageModal";
 import DisplayUploadingImages from "./code/DisplayUploadingImages";
 import useChatLogic from "../hook/useChatLogic";
+import { AudioComponent } from "./code/AudioComponent";
+import { BlockedUI } from "./code/BlockedUI";
 
 const MessagePage = () => {
   const {
@@ -56,7 +56,7 @@ const MessagePage = () => {
       }}
       className="bg-no-repeat bg-cover"
     >
-      <Header
+      <Header 
         user={user}
         dataUser={dataUser}
         isTyping={isTyping}
@@ -155,24 +155,4 @@ const MessagePage = () => {
 
 export default MessagePage;
 
-export const AudioComponent = ({
-  handleUploadImageVideoOpen,
-  openImageVideoUpload,
-}) => {
-  return (
-    <button
-      onClick={handleUploadImageVideoOpen}
-      className="flex justify-center items-center w-11 h-11 rounded-full hover:bg-primary hover:text-grey"
-    >
-      {openImageVideoUpload ? <RxCross2 size={26} /> : <FaPlus size={20} />}
-    </button>
-  );
-};
 
-export const BlockedUI = () => {
-  return (
-    <p className="text-gray-400 pb-4 text-center w-full">
-      <i>You have blocked </i>{" "}
-    </p>
-  );
-};

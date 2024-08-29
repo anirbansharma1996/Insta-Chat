@@ -7,9 +7,9 @@ const getConversation = async (currentUserId) => {
     })
       .sort({ updatedAt: -1 })
       .populate("messages")
-      .populate("sender")
-      .populate("receiver");
-
+      .populate({ path: "sender", select: "-password" })
+      .populate({ path: "receiver", select: "-password" });
+    
     const conversation = currentUserConversation.map((conv) => {
       const countUnseenMsg = conv?.messages?.reduce((preve, curr) => {
         const msgByUserId = curr?.msgByUserId?.toString();

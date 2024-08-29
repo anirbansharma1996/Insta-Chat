@@ -25,19 +25,18 @@ const blockedBy = new Set();
 io.on("connection", async (socket) => {
   const token = socket.handshake.auth.token;
   const user = await getUserDetailsFromToken(token);
-  const block_users = user.blockedUsers.map((user) => user.toString());
-  const blockedBy_users = user.blockedBy.map((user) => user.toString());
+  const block_users = user?.blockedUsers?.map((user) => user.toString());
+  const blockedBy_users = user?.blockedBy?.map((user) => user.toString());
 
   // Create a room for the user
   socket.join(user?._id?.toString());
   onlineUser.add(user?._id?.toString());
 
   // Update the blockedUsers and blockedBy sets
-  block_users.forEach((userId) => blockedUsers.add(userId));
-  blockedBy_users.forEach((userId) => blockedBy.add(userId));
+  block_users?.forEach((userId) => blockedUsers.add(userId));
+  blockedBy_users?.forEach((userId) => blockedBy.add(userId));
 
   io.emit("onlineUser", Array.from(onlineUser));
-
 
   socket.on("message-page", async (userId) => {
     const userDetails = await UserModel.findById(userId).select("-password");
@@ -77,8 +76,8 @@ io.on("connection", async (socket) => {
 
   // New message
   socket.on("new message", async (data) => {
-    const sender = await UserModel.findById(data.sender);
-    const receiver = await UserModel.findById(data.receiver);
+    const sender = await UserModel.findById(data.sender).select("-password");
+    const receiver = await UserModel.findById(data.receiver).select("-password");
 
     // check if the user is blocke
     if (
@@ -136,7 +135,7 @@ io.on("connection", async (socket) => {
           options: { lean: true },
         },
       })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 }).select('-password');
 
     io.to(data?.sender).emit("message", getConversationMessage?.messages || []);
     io.to(data?.receiver).emit(
@@ -160,9 +159,11 @@ io.on("connection", async (socket) => {
       await UserModel.findByIdAndUpdate(blockedUserId, {
         $addToSet: { blockedBy: user._id },
       });
-      io.to(blockedUserId).emit("block-success", {message : "user blocked successfully",blockedUserId:blockedUserId});
-      socket.emit("block-success", {message : "user blocked successfully"});
-
+      io.to(blockedUserId).emit("block-success", {
+        message: "user blocked successfully",
+        blockedUserId: blockedUserId,
+      });
+      socket.emit("block-success", { message: "user blocked successfully" });
     } catch (error) {
       socket.emit("block-falied", error.message);
     }
@@ -176,8 +177,13 @@ io.on("connection", async (socket) => {
       await UserModel.findByIdAndUpdate(unblockUserId, {
         $pull: { blockedBy: user._id },
       });
-      io.to(unblockUserId).emit("unblock-success", {message : "user unblocked successfully",unblockUserId:unblockUserId});
-      socket.emit("unblock-success", {message : "user unblocked successfully"});
+      io.to(unblockUserId).emit("unblock-success", {
+        message: "user unblocked successfully",
+        unblockUserId: unblockUserId,
+      });
+      socket.emit("unblock-success", {
+        message: "user unblocked successfully",
+      });
     } catch (error) {
       socket.emit("unblock-failed", error.message);
     }
@@ -312,6 +318,37 @@ io.on("connection", async (socket) => {
       socket.emit("delete-failure", { error: error.message });
     }
   });
+
+  // Video call signaling
+ // Handle video call request to join a room
+socket.on("join-room", (roomId) => {
+  socket.join(roomId);
+});
+
+// Send offer to the other peer in the room
+socket.on("offer", (data) => {
+  const { roomId, offer } = data;
+  socket.to(roomId).emit("offer", offer);  // Emit offer to other peer in the room
+});
+
+// Send answer to the other peer in the room
+socket.on("answer", (data) => {
+  const { roomId, answer } = data;
+  socket.to(roomId).emit("answer", answer);  // Emit answer to other peer in the room
+});
+
+// Send ICE candidate to the other peer in the room
+socket.on("candidate", (data) => {
+  const { roomId, candidate } = data;
+  socket.to(roomId).emit("candidate", candidate);  // Emit candidate to other peer in the room
+});
+
+// Handle disconnection
+socket.on("leave-room", (roomId) => {
+  socket.leave(roomId);
+  socket.to(roomId).emit("user-left", socket.id);  // Notify others in the room
+});
+
   // Disconnect
   socket.on("disconnect", () => {
     onlineUser.delete(user?._id?.toString());

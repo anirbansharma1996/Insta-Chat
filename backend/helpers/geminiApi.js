@@ -33,7 +33,7 @@ async function run(query) {
       {
         role: "model",
         parts: [
-          {text: "Sounds exciting! I'm ready to be your chat buddy. 😊 Tell me, what's on your mind? I'll try my best to be a good friend and understand your emotions. Just keep it short and simple, and I'll do the same. 🤝 \n"},
+          {text: "Sounds exciting! I'm ready to be your chat buddy. 😊 Tell me, what's on your mind? I'll try my best to be a good friend and understand your emotions. Just keep it short and simple, and I'll do the same. 🤝"},
         ],
       },
     ],
