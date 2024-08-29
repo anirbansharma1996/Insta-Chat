@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: "*",
     credentials: true,
   },
 });
@@ -79,7 +79,7 @@ io.on("connection", async (socket) => {
     const sender = await UserModel.findById(data.sender).select("-password");
     const receiver = await UserModel.findById(data.receiver).select("-password");
 
-    // check if the user is blocke
+    // check if the user is block
     if (
       sender.blockedUsers.includes(data.reciver) ||
       receiver.blockedUsers.includes(data.sender)
@@ -149,8 +149,8 @@ io.on("connection", async (socket) => {
     io.to(data?.sender).emit("conversation", conversationSender);
     io.to(data?.receiver).emit("conversation", conversationReceiver);
   });
-  // block/unblock users
 
+  // block/unblock users
   socket.on("block-user", async (blockedUserId) => {
     try {
       await UserModel.findByIdAndUpdate(user._id, {
@@ -280,6 +280,7 @@ io.on("connection", async (socket) => {
       socket.emit("update-failure", { error: error.message });
     }
   });
+
   // delete message data
   socket.on("delete-message", async (data) => {
     const { messageId } = data;
@@ -320,7 +321,7 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // Video call signaling
+  //------------ Video call signaling ---------------
  // Handle video call request to join a room
 socket.on("join-room", (roomId) => {
   socket.join(roomId);

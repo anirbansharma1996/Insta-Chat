@@ -20,9 +20,7 @@ const messageState = {
 
 const useChatLogic = () => {
   const params = useParams();
-  const socketConnection = useSelector(
-    (state) => state?.user?.socketConnection
-  );
+  const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState(inititalState);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
