@@ -46,11 +46,9 @@ const MessagePage = () => {
     handleEditDeleteMessage,
     handleAiReply,
     activeMessageId,
-    setReplyingMessage 
+    setReplyingMessage,
+    handleUploadVideo,
   } = useChatLogic();
-
-
-  
 
   return (
     <div
@@ -59,7 +57,7 @@ const MessagePage = () => {
       }}
       className="bg-no-repeat bg-cover"
     >
-      <Header 
+      <Header
         user={user}
         dataUser={dataUser}
         isTyping={isTyping}
@@ -83,7 +81,7 @@ const MessagePage = () => {
         />
 
         {/**upload Image display */}
-        {message?.imageUrl && (
+        {(message?.imageUrl || message.videoUrl) && (
           <DisplayUploadingImages
             handleClearUploadImage={handleClearUploadImage}
             message={message}
@@ -128,6 +126,7 @@ const MessagePage = () => {
                 {/**video and image upload */}
                 {openImageVideoUpload && (
                   <ImageModal
+                    handleUploadVideo={handleUploadVideo}
                     handleUploadImage={handleUploadImage}
                     handleOpenCamera={handleOpenCamera}
                     isModalOpen={isModalOpen}
@@ -157,5 +156,3 @@ const MessagePage = () => {
 };
 
 export default MessagePage;
-
-

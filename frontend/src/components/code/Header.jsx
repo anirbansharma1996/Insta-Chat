@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import VideoCall from "./VideoCall";
 import { Link } from "react-router-dom";
 import Avatar from "../Avatar";
 import { FaAngleLeft } from "react-icons/fa6";
@@ -17,6 +19,15 @@ const Header = ({
   handleBlockUnblockUser,
   blockModal,
 }) => {
+  const [roomId, setRoomId] = useState(null);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+
+  const handleVideoCall = () => {
+    const newRoomId = uuidv4();
+    setRoomId(newRoomId);
+    setIsVideoCallActive(true);
+  };
+
   return (
     <header className="sticky z-40 top-0 h-16 bg-white flex justify-between items-center px-4">
       <div className="flex items-center gap-4">
@@ -68,7 +79,7 @@ const Header = ({
         </div>
       </div>
       <div className=" flex justify-between items-center relative">
-        <button onClick={()=> alert('LAUNCHING SOON !!')}>
+        <button onClick={()=>alert('comming soon')}>
           <FaVideo size={20} />
         </button>
         &nbsp;&nbsp;&nbsp;&nbsp;
@@ -107,6 +118,9 @@ const Header = ({
           </div>
         )}
       </div>
+      {isVideoCallActive && roomId && (
+        <VideoCall user={user} dataUser={dataUser} roomID={roomId} />
+      )}
     </header>
   );
 };

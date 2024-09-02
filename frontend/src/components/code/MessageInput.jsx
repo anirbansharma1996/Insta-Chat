@@ -1,6 +1,5 @@
 import React from "react";
 import { IoMdSend, IoMdMic } from "react-icons/io";
-import { FaImage, FaCamera } from "react-icons/fa";
 import { IoClose, IoStopCircleOutline } from "react-icons/io5";
 
 const MessageInput = ({
@@ -34,9 +33,7 @@ const MessageInput = ({
     )}
     {!audioUrl && (
       <textarea
-        placeholder={
-          aiLoading ? "AI is thinking..." : "Type here message..."
-        }
+        placeholder={aiLoading ? "AI is thinking..." : "Type here message..."}
         className="z-50 py-2 px-4 outline-none w-full resize-none overflow-hidden rounded-lg "
         value={message?.text}
         onChange={handleOnChange}

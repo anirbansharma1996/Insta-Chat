@@ -45,7 +45,8 @@ const Conversation = ({
                   </label>
                   {dataUser?._id !== msg.msgByUserId &&
                     !msg.imageUrl &&
-                    !msg.audioUrl && (
+                    !msg.audioUrl &&
+                    !msg.videoUrl && (
                       <label
                         onClick={() => handleEditText(msg)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
@@ -77,6 +78,14 @@ const Conversation = ({
                   className="w-full h-full object-scale-down"
                 />
               )}
+              {msg?.videoUrl && !msg?.isDeleted && (
+                <video
+                  controls
+                  autoPlay
+                  src={!msg?.isDeleted && msg?.videoUrl}
+                  className="w-full h-full object-scale-down"
+                />
+              )}
             </div>
             <div className="w-full relative">
               {!msg?.isDeleted && msg?.audioUrl && (
@@ -104,6 +113,15 @@ const Conversation = ({
                     <img
                       className="mt-1 w-36"
                       src={msg?.replyTo?.imageUrl}
+                      alt={msg.replyTo._id}
+                    />
+                  )}
+                  {msg?.replyTo?.videoUrl && (
+                    <video
+                      controls
+                      autoPlay
+                      className="mt-1 w-36"
+                      src={msg?.replyTo?.videoUrl}
                       alt={msg.replyTo._id}
                     />
                   )}

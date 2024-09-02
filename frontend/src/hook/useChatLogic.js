@@ -1,10 +1,9 @@
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { REACT_APP_BACKEND_URL } from "../../env";
 import toast from "react-hot-toast";
 import axios from "axios";
-import uploadFile from "../helpers/uploadFile";
 
 const inititalState = {
   name: "",
@@ -12,15 +11,19 @@ const inititalState = {
   profile_pic: "",
   online: false,
   _id: "",
-}
+};
 const messageState = {
   text: "",
   imageUrl: "",
-}
+  audio: "",
+  videoUrl: "",
+};
 
 const useChatLogic = () => {
   const params = useParams();
-  const socketConnection = useSelector((state) => state?.user?.socketConnection);
+  const socketConnection = useSelector(
+    (state) => state?.user?.socketConnection
+  );
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState(inititalState);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
@@ -73,24 +76,40 @@ const useChatLogic = () => {
 
   // base64 to Blob file convert
   const handleCapturePhoto = async (imageData) => {
+    setLoading(true);
     const base64String = imageData;
     const mimeType = "image/jpeg";
     const filename = Date.now() + "_" + user.name + "-self.jpg";
     const base64Data = base64String.split(",")[1];
     const blob = base64ToBlob(base64Data, mimeType);
     const file = blobToFile(blob, filename);
-    setCapturedImage(URL.createObjectURL(file));
-    setLoading(true);
-    const uploadPhoto = await uploadFile(file);
-    setLoading(false);
-    setMessage((preve) => {
-      return {
-        ...preve,
-        imageUrl: uploadPhoto.url,
-      };
-    });
     handleCloseModal();
     setOpenImageVideoUpload(false);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await axios.post(
+        `${REACT_APP_BACKEND_URL}/image-upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (res.status == 201) {
+        setLoading(false);
+        setMessage((preve) => {
+          return {
+            ...preve,
+            imageUrl: res.data,
+          };
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("Error uploading image:", error);
+    }
   };
 
   // scroll into view text
@@ -117,15 +136,33 @@ const useChatLogic = () => {
   const handleUploadImage = async (e) => {
     const file = e.target.files[0];
     setLoading(true);
-    const uploadPhoto = await uploadFile(file);
-    setLoading(false);
     setOpenImageVideoUpload(false);
-    setMessage((preve) => {
-      return {
-        ...preve,
-        imageUrl: uploadPhoto.url,
-      };
-    });
+
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await axios.post(
+        `${REACT_APP_BACKEND_URL}/image-upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (res.status == 201) {
+        setLoading(false);
+        setMessage((preve) => {
+          return {
+            ...preve,
+            imageUrl: res.data,
+          };
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("Error uploading image:", error);
+    }
   };
 
   // clear upload image field
@@ -134,6 +171,7 @@ const useChatLogic = () => {
       return {
         ...preve,
         imageUrl: "",
+        videoUrl: "",
       };
     });
   };
@@ -186,7 +224,7 @@ const useChatLogic = () => {
   // sending message / updating message
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (message.text || message.imageUrl || message.audio) {
+    if (message.text || message.imageUrl || message.audio || message.videoUrl) {
       if (socketConnection) {
         if (editingMessageId) {
           socketConnection.emit("update-message", {
@@ -195,24 +233,26 @@ const useChatLogic = () => {
           });
           setEditingMessageId(null);
         } else {
-          socketConnection.emit("new message", {
+          const messagePayload = {
             sender: user?._id,
             receiver: params.userId,
             text: message.text,
             imageUrl: message.imageUrl,
             audioUrl: message.audio,
+            videoUrl: message.videoUrl,
             msgByUserId: user?._id,
             rcvByUserId: params.userId,
             replyTo: replyingMessage?._id,
-          });
+          };
+          // Send the message payload
+          socketConnection.emit("new message", messagePayload);
+          // Notify typing status
+          socketConnection.emit("typing", { typing: false });
+          // Reset state
+          setReplyingMessage(null);
+          setAudioUrl(false);
+          setMessage(messageState);
         }
-        socketConnection.emit("typing", { typing: false });
-        setReplyingMessage(null);
-        setAudioUrl(false);
-        setMessage({
-          text: "",
-          imageUrl: "",
-        });
       }
     }
   };
@@ -246,18 +286,32 @@ const useChatLogic = () => {
           audio: true,
         });
         const recorder = new MediaRecorder(stream);
-
         recorder.ondataavailable = async (event) => {
           if (event.data.size > 0) {
             const audioBlob = event.data;
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "recording.webm");
             setLoading(true);
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audiodata = await uploadFile(audioBlob);
-            setMessage({ ...message, audio: audiodata.url });
-            setLoading(false);
-            setAudioUrl(audioUrl);
+            try {
+              const res = await axios.post(
+                `${REACT_APP_BACKEND_URL}/audio-upload`,
+                formData,
+                {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                  },
+                }
+              );
+              setLoading(false);
+              setMessage({ ...message, audio: res.data });
+              setAudioUrl(res.data);
+            } catch (uploadError) {
+              setLoading(false);
+              console.error("Error uploading audio:", uploadError);
+            }
           }
         };
+
         recorder.start();
         setMediaRecorder(recorder);
         setIsRecording(true);
@@ -268,6 +322,7 @@ const useChatLogic = () => {
       alert("Audio recording is not supported in this browser.");
     }
   };
+
   // voice record stop
   const stopRecording = () => {
     if (mediaRecorder) {
@@ -302,7 +357,7 @@ const useChatLogic = () => {
       const res = await axios.post(`${REACT_APP_BACKEND_URL}/prompt`, {
         prompt: query,
       });
-  
+
       if (res.status == 200) {
         setMessage((preve) => {
           return {
@@ -315,6 +370,37 @@ const useChatLogic = () => {
     } catch (error) {
       setAiLoading(false);
       toast.error("AI currently unavailable");
+    }
+  };
+
+  const handleUploadVideo = async (e) => {
+    setLoading(true);
+    const file = e.target.files[0];
+    setOpenImageVideoUpload(false);
+    const formData = new FormData();
+    formData.append("video", file);
+    try {
+      const res = await axios.post(
+        `${REACT_APP_BACKEND_URL}/video-upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (res.status == 201) {
+        setLoading(false);
+        setMessage((preve) => {
+          return {
+            ...preve,
+            videoUrl: res.data,
+          };
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("Error uploading image:", error);
     }
   };
 
@@ -353,8 +439,9 @@ const useChatLogic = () => {
     handleReply,
     handleEditDeleteMessage,
     handleAiReply,
-    activeMessageId ,
-    setReplyingMessage 
+    activeMessageId,
+    setReplyingMessage,
+    handleUploadVideo,
   };
 };
 

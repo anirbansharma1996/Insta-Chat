@@ -35,6 +35,14 @@ const ReplyingMessage = ({
             src={replyingMessage?.audioUrl}
           />
         )}
+        {replyingMessage?.videoUrl && (
+          <video
+            className="w-60 p-1"
+            controls
+            autoPlay
+            src={replyingMessage?.videoUrl}
+          />
+        )}
       </div>
       <div className="flex ">
         <button

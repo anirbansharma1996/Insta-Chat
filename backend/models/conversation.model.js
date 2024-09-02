@@ -10,6 +10,10 @@ const MessageSchema = new Schema(
       type: String,
       default: "",
     },
+    videoUrl: {
+      type: String,
+      default: "",
+    },
     audioUrl: {
       type: String,
       default: "",

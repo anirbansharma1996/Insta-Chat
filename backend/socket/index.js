@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const express = require("express");
 const http = require("http");
 
+
 const app = express();
 
 /***socket connection */
@@ -76,9 +77,12 @@ io.on("connection", async (socket) => {
 
   // New message
   socket.on("new message", async (data) => {
-    const sender = await UserModel.findById(data.sender).select("-password");
-    const receiver = await UserModel.findById(data.receiver).select("-password");
+    console.log(data);
 
+    const sender = await UserModel.findById(data.sender).select("-password");
+    const receiver = await UserModel.findById(data.receiver).select(
+      "-password"
+    );
     // check if the user is block
     if (
       sender.blockedUsers.includes(data.reciver) ||
@@ -87,7 +91,6 @@ io.on("connection", async (socket) => {
       socket.emit("message-blocked", "You cann't send message");
       return;
     }
-
     // if not blocked start chatting
     let conversation = await Conversation.findOne({
       $or: [
@@ -108,12 +111,13 @@ io.on("connection", async (socket) => {
       text: data.text,
       imageUrl: data.imageUrl,
       audioUrl: data.audioUrl,
+      videoUrl: data.videoUrl,
       replyTo: data.replyTo,
       msgByUserId: data?.msgByUserId,
       rcvByUserId: data?.rcvByUserId,
     });
-    const saveMessage = await message.save();
 
+    const saveMessage = await message.save();
     await Conversation.updateOne(
       { _id: conversation?._id },
       {
@@ -135,7 +139,8 @@ io.on("connection", async (socket) => {
           options: { lean: true },
         },
       })
-      .sort({ updatedAt: -1 }).select('-password');
+      .sort({ updatedAt: -1 })
+      .select("-password");
 
     io.to(data?.sender).emit("message", getConversationMessage?.messages || []);
     io.to(data?.receiver).emit(
@@ -245,7 +250,7 @@ io.on("connection", async (socket) => {
           $set: {
             text: newText,
             imageUrl: newImageUrl,
-            isEdited : true
+            isEdited: true,
           },
         },
         { new: true }
@@ -322,34 +327,29 @@ io.on("connection", async (socket) => {
   });
 
   //------------ Video call signaling ---------------
- // Handle video call request to join a room
-socket.on("join-room", (roomId) => {
-  socket.join(roomId);
-});
 
-// Send offer to the other peer in the room
-socket.on("offer", (data) => {
-  const { roomId, offer } = data;
-  socket.to(roomId).emit("offer", offer);  // Emit offer to other peer in the room
-});
+  // socket.on("outgoing-video-call", (data) => {
+  //   const sendUserSocket = onlineUser.has(data.to);
+  //   if (sendUserSocket) {
+  //     socket.to(data.to).emit("incoming-video-call", {
+  //       from: data.from,
+  //       roomId: data.roomId,
+  //       callType: data.callType,
+  //     });
+  //   }
+  // });
 
-// Send answer to the other peer in the room
-socket.on("answer", (data) => {
-  const { roomId, answer } = data;
-  socket.to(roomId).emit("answer", answer);  // Emit answer to other peer in the room
-});
+  // socket.on("reject-video-call", (data) => {
+  //   const sendUserSocket = onlineUser.has(data.from);
+  //   if (sendUserSocket) {
+  //     socket.to(sendUserSocket).emit("video-call-rejected");
+  //   }
+  // });
 
-// Send ICE candidate to the other peer in the room
-socket.on("candidate", (data) => {
-  const { roomId, candidate } = data;
-  socket.to(roomId).emit("candidate", candidate);  // Emit candidate to other peer in the room
-});
-
-// Handle disconnection
-socket.on("leave-room", (roomId) => {
-  socket.leave(roomId);
-  socket.to(roomId).emit("user-left", socket.id);  // Notify others in the room
-});
+  // socket.on("accept-incoming-call", ({ id }) => {
+  //   const sendUserSocket = onlineUser.has(id);
+  //   socket.to(sendUserSocket).emit("accept-call");
+  // });
 
   // Disconnect
   socket.on("disconnect", () => {
