@@ -11,7 +11,6 @@ const uploadImage = async (req, res) => {
 
 const uploadVideo = async (req, res) => {
   try {
-    console.log(req.file)
     const response = await uploadVideoToCloudinary(req.file.buffer);
     res.status(201).json(response);
   } catch (error) {
