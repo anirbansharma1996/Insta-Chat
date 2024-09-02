@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import VideoCall from "./VideoCall";
 import { Link } from "react-router-dom";
 import Avatar from "../Avatar";
@@ -9,6 +8,7 @@ import { RxCross2 } from "react-icons/rx";
 import { HiDotsVertical } from "react-icons/hi";
 import { CgUnblock } from "react-icons/cg";
 import { FaVideo } from "react-icons/fa";
+// import { v4 as uuidv4 } from "uuid";
 
 const Header = ({
   user,
@@ -19,14 +19,14 @@ const Header = ({
   handleBlockUnblockUser,
   blockModal,
 }) => {
-  const [roomId, setRoomId] = useState(null);
-  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  // const [roomId, setRoomId] = useState(null);
+  // const [isVideoCallActive, setIsVideoCallActive] = useState(false);
 
-  const handleVideoCall = () => {
-    const newRoomId = uuidv4();
-    setRoomId(newRoomId);
-    setIsVideoCallActive(true);
-  };
+  // const handleVideoCall = () => {
+  //   const newRoomId = uuidv4();
+  //   setRoomId(newRoomId);
+  //   setIsVideoCallActive(true);
+  // };
 
   return (
     <header className="sticky z-40 top-0 h-16 bg-white flex justify-between items-center px-4">
