@@ -118,9 +118,9 @@ const Header = ({
           </div>
         )}
       </div>
-      {isVideoCallActive && roomId && (
+      {/* {isVideoCallActive && roomId && (
         <VideoCall user={user} dataUser={dataUser} roomID={roomId} />
-      )}
+      )} */}
     </header>
   );
 };
