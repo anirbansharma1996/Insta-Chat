@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { REACT_APP_BACKEND_URL } from "../../env";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
@@ -22,9 +22,7 @@ const messageState = {
 
 const useChatLogic = () => {
   const params = useParams();
-  const socketConnection = useSelector(
-    (state) => state?.user?.socketConnection
-  );
+  const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState(inititalState);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
@@ -231,47 +229,20 @@ const useChatLogic = () => {
   // on mounting this socket connection function will run
   useEffect(() => {
     if (socketConnection) {
+      // message
       socketConnection.emit("delivered", params.userId);
       socketConnection.emit("message-page", params.userId);
       socketConnection.emit("seen", params.userId);
-      socketConnection.on("message-user", (data) => {
-        setDataUser(data);
-      });
-      socketConnection.on("message", (data) => {
-        setAllMessage(data);
-      });
-      socketConnection.on("display", (data) => {
-        setIsTyping(data.typing ? true : false);
-      });
-      socketConnection.on("block-success", ({ message }) => {
-        if (message) window.location.reload();
-      });
-      socketConnection.on("unblock-success", ({ message }) => {
-        if (message) window.location.reload();
-      });
-      // Listen for incoming video calls
-      socketConnection.on(
-        "incoming-video-call",
-        ({ to, from, roomId, callType }) => {
-          setIncomingCall({ to, from, roomId, callType });
-        }
-      );
-      // Listen for call acceptance
-      socketConnection.on("accept-call", ({ roomId }) => {
-        setCallAccepted(true);
-        setJoinRoom(roomId);
-      });
-      // Listen for call rejection
-      socketConnection.on("video-call-rejected", (data) => {
-        console.log("Room joined:", roomId);
-        setCallRejected(data);
-        endCall();
-      });
-      // Handle when a user joins the room
-      socketConnection.on("room-joined", ({ roomId }) => {
-        setJoinRoom(roomId);
-        setCallAccepted(true);
-      });
+      socketConnection.on("message-user", (data) => {setDataUser(data)});
+      socketConnection.on("message", (data) => {setAllMessage(data)});
+      socketConnection.on("display", (data) => {setIsTyping(data.typing ? true : false)});
+      socketConnection.on("block-success", ({ message }) => {if (message) window.location.reload()});
+      socketConnection.on("unblock-success", ({ message }) => {if (message) window.location.reload()});
+      // video call 
+      socketConnection.on("incoming-video-call",({ to, from, roomId, callType }) => {setIncomingCall({ to, from, roomId, callType })});
+      socketConnection.on("accept-call", ({ roomId }) => {setCallAccepted(true);setJoinRoom(roomId)});
+      socketConnection.on("video-call-rejected", (data) => {setCallRejected(data);endCall()});
+      socketConnection.on("room-joined", ({ roomId }) => {setJoinRoom(roomId);setCallAccepted(true)});
     }
   }, [socketConnection, params?.userId, joinroom, user]);
 
