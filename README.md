@@ -16,8 +16,8 @@ The Insta Chat is a real-time messaging platform that allows users to sign up an
 3. **Real-Time Messaging:**
    - The core functionality of the app allows users to send and receive messages in real-time. Messages are delivered instantly, ensuring a smooth and responsive chat experience.
 
-4. **Stranger Chat:**
-   - Users are randomly matched with strangers to initiate conversations, making each interaction unique and spontaneous.
+4. **Stranger Chat & Video call:**
+   - Users are randomly matched with strangers to initiate conversations, making each interaction unique and spontaneous. and also users can video chat with different persons .
 
 5. **Image Sharing:**
    - Beyond text, users can also share images during their chats, adding a visual element to their conversations.

@@ -2,7 +2,8 @@ import React from "react";
 
 const Features = () => {
   const featuresList = [
-    "Text to a random person",
+    "Chat with a random person",
+    "Video call a random person",
     "Send photo",
     "Take selfie",
     "Send voice note",
