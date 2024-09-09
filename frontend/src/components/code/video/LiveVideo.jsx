@@ -108,7 +108,7 @@ const VideoPlayer = ({ user }) => {
 
   return (
     <div className="flex flex-col items-center bg-gray-800 p-2 rounded">
-      <div ref={ref} className="w-96 h-72 bg-black rounded"></div>
+      <div ref={ref} className="w-60 h-60 bg-black rounded"></div>
     </div>
   );
 };
