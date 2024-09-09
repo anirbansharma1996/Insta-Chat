@@ -82,7 +82,7 @@ export const LiveVideo = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-      <div className="flex flex-wrap justify-center gap-4 mb-4">
+      <div className="flex flex-wrap justify-center gap-4 mb-4 -mt-4">
         {users.map((user) => (
           <VideoPlayer key={user.uid} user={user} />
         ))}
@@ -108,7 +108,7 @@ const VideoPlayer = ({ user }) => {
 
   return (
     <div className="flex flex-col items-center bg-gray-800 p-2 rounded">
-      <div ref={ref} className="w-60 h-60 bg-black rounded"></div>
+      <div ref={ref} className="w-72 h-60 bg-black rounded"></div>
     </div>
   );
 };
