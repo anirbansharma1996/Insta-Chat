@@ -48,16 +48,40 @@ const MessagePage = () => {
     activeMessageId,
     setReplyingMessage,
     handleUploadVideo,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    isVideoCallActive,
+    callAccepted,
+    callRejected,
+    callType,
+    localVideoRef,
+    remoteVideoRef,
+    peerConnection,
+    incomingCall,
+    joinroom,
   } = useChatLogic();
 
   return (
     <div
-      style={{
-        backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`,
-      }}
+      style={{backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`}}
       className="bg-no-repeat bg-cover"
     >
+      
       <Header
+        joinroom={joinroom}
+        startCall={startCall}
+        acceptCall={acceptCall}
+        rejectCall={rejectCall}
+        endCall={endCall}
+        isVideoCallActive={isVideoCallActive}
+        callAccepted={callAccepted}
+        callRejected={callRejected}
+        callType={callType}
+        localVideoRef={localVideoRef}
+        remoteVideoRef={remoteVideoRef}
+        peerConnection={peerConnection}
         user={user}
         dataUser={dataUser}
         isTyping={isTyping}
@@ -65,6 +89,7 @@ const MessagePage = () => {
         handleUnblockFn={handleUnblockFn}
         handleBlockUnblockUser={handleBlockUnblockUser}
         blockModal={blockModal}
+        incomingCall={incomingCall}
       />
       {/***show all message */}
       <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50">

@@ -2,6 +2,10 @@ const { Schema, model, default: mongoose } = require("mongoose");
 
 const MessageSchema = new Schema(
   {
+    originalText:{
+      type: String,
+      default: "",
+    },
     text: {
       type: String,
       default: "",

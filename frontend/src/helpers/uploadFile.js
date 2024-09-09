@@ -1,4 +1,3 @@
-const url = `https://api.cloudinary.com/v1_1/dfrgwthkq/auto/upload`;
 
 const uploadFile = async (file) => {
   const formData = new FormData();

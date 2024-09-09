@@ -6,7 +6,6 @@ const { Server } = require("socket.io");
 const express = require("express");
 const http = require("http");
 
-
 const app = express();
 
 /***socket connection */
@@ -66,7 +65,6 @@ io.on("connection", async (socket) => {
         },
       })
       .sort({ updatedAt: -1 });
-
     socket.emit("message", getConversationMessage?.messages || []);
   });
 
@@ -77,8 +75,6 @@ io.on("connection", async (socket) => {
 
   // New message
   socket.on("new message", async (data) => {
-    console.log(data);
-
     const sender = await UserModel.findById(data.sender).select("-password");
     const receiver = await UserModel.findById(data.receiver).select(
       "-password"
@@ -108,6 +104,7 @@ io.on("connection", async (socket) => {
     }
 
     const message = new Message({
+      originalText: data.text,
       text: data.text,
       imageUrl: data.imageUrl,
       audioUrl: data.audioUrl,
@@ -328,29 +325,61 @@ io.on("connection", async (socket) => {
 
   //------------ Video call signaling ---------------
 
-  // socket.on("outgoing-video-call", (data) => {
-  //   const sendUserSocket = onlineUser.has(data.to);
-  //   if (sendUserSocket) {
-  //     socket.to(data.to).emit("incoming-video-call", {
-  //       from: data.from,
-  //       roomId: data.roomId,
-  //       callType: data.callType,
-  //     });
-  //   }
-  // });
+  socket.on("outgoing-video-call", (data) => {
+    const sendUserSocket = onlineUser.has(data.to);
+    if (sendUserSocket) {
+      const request = {
+        to: data.to,
+        from: data.from._id,
+        roomId: data.roomId,
+        callType: data.callType,
+      };
+      socket.to(data.to).emit("incoming-video-call", request);
+    }
+  });
 
-  // socket.on("reject-video-call", (data) => {
-  //   const sendUserSocket = onlineUser.has(data.from);
-  //   if (sendUserSocket) {
-  //     socket.to(sendUserSocket).emit("video-call-rejected");
-  //   }
-  // });
+  socket.on("reject-video-call", (data) => {
+    const sendUserSocket = onlineUser.has(data.from);
+    if (sendUserSocket) {
+      socket.to(data.from).emit("video-call-rejected", true);
+    }
+  });
 
-  // socket.on("accept-incoming-call", ({ id }) => {
-  //   const sendUserSocket = onlineUser.has(id);
-  //   socket.to(sendUserSocket).emit("accept-call");
-  // });
+  socket.on("accept-incoming-call", ({ to, id, roomId }) => {
+    const sendUserSocket = onlineUser.has(id);
+    const receiveUserSocket = onlineUser.has(to);
+    if (sendUserSocket && receiveUserSocket) {
+      socket.join(roomId);
+      socket.to(to).emit("accept-call", { roomId });
+      io.to(roomId).emit("room-joined", { roomId });
+    }
+  });
+  socket.on("room:join", (data) => {
+    const { email, room } = data;
+    emailToSocketIdMap.set(email, socket.id);
+    socketidToEmailMap.set(socket.id, email);
+    io.to(room).emit("user:joined", { email, id: socket.id });
+    socket.join(room);
+    io.to(socket.id).emit("room:join", data);
+  });
 
+  socket.on("user:call", ({ to, offer }) => {
+    io.to(to).emit("incomming:call", { from: socket.id, offer });
+  });
+
+  socket.on("call:accepted", ({ to, ans }) => {
+    io.to(to).emit("call:accepted", { from: socket.id, ans });
+  });
+
+  socket.on("peer:nego:needed", ({ to, offer }) => {
+    console.log("peer:nego:needed", offer);
+    io.to(to).emit("peer:nego:needed", { from: socket.id, offer });
+  });
+
+  socket.on("peer:nego:done", ({ to, ans }) => {
+    console.log("peer:nego:done", ans);
+    io.to(to).emit("peer:nego:final", { from: socket.id, ans });
+  });
   // Disconnect
   socket.on("disconnect", () => {
     onlineUser.delete(user?._id?.toString());

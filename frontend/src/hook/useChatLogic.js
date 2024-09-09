@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { REACT_APP_BACKEND_URL } from "../../env";
 import toast from "react-hot-toast";
+import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 
 const inititalState = {
@@ -33,7 +34,6 @@ const useChatLogic = () => {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [activeMessageId, setActiveMessageId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [replyingMessage, setReplyingMessage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -42,6 +42,16 @@ const useChatLogic = () => {
   const currentMessage = useRef(null);
   const [blockModal, setBlockModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [isCalling, setIsCalling] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [callAccepted, setCallAccepted] = useState(false);
+  const [callRejected, setCallRejected] = useState(false);
+  const [peerConnection, setPeerConnection] = useState(null);
+  const [callType, setCallType] = useState("");
+  const [joinroom, setJoinRoom] = useState("");
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
 
   // open camera modal
   const handleOpenCamera = () => {
@@ -180,6 +190,44 @@ const useChatLogic = () => {
     setAudioUrl(false);
   };
 
+  const startCall = () => {
+    try {
+      setCallType("video");
+      const newRoomId = uuidv4();
+      setJoinRoom(newRoomId);
+      
+      // Emit socket event to start the call
+      socketConnection.emit("outgoing-video-call", {
+        from: { _id: user._id },
+        to: dataUser._id,
+        roomId: newRoomId,
+        callType: "video",
+      });
+      window.location.href =(`/via/${newRoomId}`);
+      
+      setIsVideoCallActive(true);
+    } catch (error) {
+      console.error("Error starting the call:", error); // Log any unexpected errors
+    }
+  };
+  
+  const acceptCall = () => {
+    window.location.href =(`/via/${incomingCall.roomId}`);
+  };
+  
+  const rejectCall = () => {
+    socketConnection.emit("reject-video-call", { from: incomingCall.from });
+    setCallRejected(true);
+    setIncomingCall(null);
+  };
+
+  const endCall = () => {
+    socketConnection.emit("reject-video-call", { from: incomingCall.from });
+    setCallRejected(true);
+    setIncomingCall(null);
+    setIsCalling(false);
+  };
+
   // on mounting this socket connection function will run
   useEffect(() => {
     if (socketConnection) {
@@ -201,8 +249,31 @@ const useChatLogic = () => {
       socketConnection.on("unblock-success", ({ message }) => {
         if (message) window.location.reload();
       });
+      // Listen for incoming video calls
+      socketConnection.on(
+        "incoming-video-call",
+        ({ to, from, roomId, callType }) => {
+          setIncomingCall({ to, from, roomId, callType });
+        }
+      );
+      // Listen for call acceptance
+      socketConnection.on("accept-call", ({ roomId }) => {
+        setCallAccepted(true);
+        setJoinRoom(roomId);
+      });
+      // Listen for call rejection
+      socketConnection.on("video-call-rejected", (data) => {
+        console.log("Room joined:", roomId);
+        setCallRejected(data);
+        endCall();
+      });
+      // Handle when a user joins the room
+      socketConnection.on("room-joined", ({ roomId }) => {
+        setJoinRoom(roomId);
+        setCallAccepted(true);
+      });
     }
-  }, [socketConnection, params?.userId, user]);
+  }, [socketConnection, params?.userId, joinroom, user]);
 
   // input taking
   const handleOnChange = (e) => {
@@ -251,9 +322,9 @@ const useChatLogic = () => {
           // Reset state
           setReplyingMessage(null);
           setAudioUrl(false);
-          setMessage(messageState);
         }
       }
+      setMessage(messageState);
     }
   };
 
@@ -442,6 +513,19 @@ const useChatLogic = () => {
     activeMessageId,
     setReplyingMessage,
     handleUploadVideo,
+    isVideoCallActive,
+    callAccepted,
+    callRejected,
+    callType,
+    localVideoRef,
+    remoteVideoRef,
+    peerConnection,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    incomingCall,
+    joinroom,
   };
 };
 
