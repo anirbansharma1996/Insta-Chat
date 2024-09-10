@@ -21,7 +21,7 @@ const urlEncoded = async (req, res) => {
       res.status(404).json({ error: "No OG data found" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch OG data" });
+    res.status(500).json({ error: error.message });
   }
 };
 

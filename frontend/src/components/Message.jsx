@@ -61,7 +61,9 @@ const MessagePage = () => {
     peerConnection,
     incomingCall,
     joinroom,
-    ogData
+    ogData,
+    formatDate,
+    groupedMessages
   } = useChatLogic();
 
   return (
@@ -104,6 +106,8 @@ const MessagePage = () => {
           handleDeleteText={handleDeleteText}
           handleEditText={handleEditText}
           loading={loading}
+          formatDate={formatDate}
+          groupedMessages={groupedMessages}
         />
 
         {/**upload Image display */}

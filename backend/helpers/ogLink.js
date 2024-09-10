@@ -5,7 +5,7 @@ async function fetchOGData(url) {
     const { result } = await ogs({ url });
     return result;
   } catch (error) {
-    console.error('Error fetching OG data:', error);
+    console.log('Error fetching OG data:', error);
     return null;
   }
 }

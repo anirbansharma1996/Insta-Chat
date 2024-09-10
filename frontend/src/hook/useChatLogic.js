@@ -5,6 +5,7 @@ import { REACT_APP_BACKEND_URL } from "../../env";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import moment from "moment";
 
 const inititalState = {
   name: "",
@@ -77,7 +78,7 @@ const useChatLogic = () => {
       setOgData(response.data);
     } catch (error) {
       setLoading(false);
-      console.error("Error fetching OG data:", error);
+      console.log("Error fetching OG data:", error);
       setOgData(null);
     }
   };
@@ -269,6 +270,7 @@ const useChatLogic = () => {
       });
       socketConnection.on("message", (data) => {
         setAllMessage(data);
+        setLoading(data ? false : true);
       });
       socketConnection.on("display", (data) => {
         setIsTyping(data.typing ? true : false);
@@ -501,6 +503,20 @@ const useChatLogic = () => {
     }
   };
 
+
+   // Function to format date for the separator
+   const formatDate = (date) => moment(date).format("MMMM D, YYYY");
+
+   // Group messages by date
+   const groupedMessages = allMessage.reduce((acc, msg) => {
+     const date = moment(msg.createdAt).startOf('day').format('YYYY-MM-DD');
+     if (!acc[date]) {
+       acc[date] = [];
+     }
+     acc[date].push(msg);
+     return acc;
+   }, {});
+
   return {
     user,
     dataUser,
@@ -553,6 +569,8 @@ const useChatLogic = () => {
     incomingCall,
     joinroom,
     ogData,
+    formatDate,
+    groupedMessages
   };
 };
 
