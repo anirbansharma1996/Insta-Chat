@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.7",
+    "agora-react-uikit": "^1.2.0",
     "agora-rtc-react": "^2.3.0",
     "agora-rtc-sdk-ng": "^4.22.0",
     "axios": "^1.7.4",

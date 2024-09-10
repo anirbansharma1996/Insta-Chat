@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AgoraRTC from "agora-rtc-react";
-import { MdCallEnd } from "react-icons/md";
+import { MdCallEnd, MdVideocamOff, MdVideocam, MdMicOff, MdMic } from "react-icons/md";
 
 const client = AgoraRTC.createClient({
   mode: "rtc",
@@ -15,6 +15,8 @@ const TOKEN =
 export const LiveVideo = () => {
   const [users, setUsers] = useState([]);
   const [localTracks, setLocalTracks] = useState([]);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
 
   const handleUserJoined = async (user, mediaType) => {
     await client.subscribe(user, mediaType);
@@ -45,6 +47,16 @@ export const LiveVideo = () => {
       setUsers([]);
       window.location.href = "/";
     });
+  };
+
+  const toggleMute = () => {
+    localTracks[0].setMuted(!isMuted);
+    setIsMuted(!isMuted);
+  };
+
+  const toggleVideo = () => {
+    localTracks[1].setMuted(!isVideoOff);
+    setIsVideoOff(!isVideoOff);
   };
 
   useEffect(() => {
@@ -81,21 +93,36 @@ export const LiveVideo = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-      <div className="flex flex-wrap justify-center gap-4 mb-4 -mt-10">
-        {users.map((user) => (
-          <VideoPlayer key={user.uid} user={user} />
-        ))}
+    <>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
+        <div className="flex flex-wrap justify-center gap-1 mb-4 -mt-12">
+          {users.map((user) => (
+            <VideoPlayer key={user.uid} user={user} />
+          ))}
+        </div>
+        <div className="flex space-x-4 justify-center">
+          {/* video stop start , audio mute and unmute */}
+          {/* <button
+            onClick={toggleMute}
+            className="bg-gray-800 rounded-full p-3 text-white hover:bg-gray-700"
+          >
+            {isMuted ? <MdMicOff size={25} /> : <MdMic size={25} />}
+          </button>
+          <button
+            onClick={toggleVideo}
+            className="bg-gray-800 rounded-full p-3 text-white hover:bg-gray-700"
+          >
+            {isVideoOff ? <MdVideocamOff size={25} /> : <MdVideocam size={25} />}
+          </button> */}
+          <button
+            onClick={disconnect}
+            className="bg-red-500 rounded-full p-3 text-white hover:bg-red-600"
+          >
+            <MdCallEnd size={25} />
+          </button>
+        </div>
       </div>
-      <div className="flex space-x-4 ">
-        <button
-          onClick={disconnect}
-          className="bg-red-500 rounded w-full text-white px-4 py-2  hover:bg-red-600"
-        >
-          <MdCallEnd size={20} />
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 
@@ -107,8 +134,8 @@ const VideoPlayer = ({ user }) => {
   }, [user.videoTrack]);
 
   return (
-    <div className="flex flex-col items-center bg-gray-800 p-2 rounded">
-      <div ref={ref} className="w-72 h-60 bg-black rounded"></div>
+    <div className="flex flex-col items-center bg-gray-800 bg-opacity-20 p-0 rounded ">
+      <div ref={ref} className="w-96 h-60 bg-black rounded"></div>
     </div>
   );
 };
