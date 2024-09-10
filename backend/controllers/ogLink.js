@@ -14,7 +14,7 @@ const urlEncoded = async (req, res) => {
       res.json({
         title: result.ogTitle || "",
         description: result.ogDescription || "",
-        image: result.ogImage[0].url || "",
+        image: result.ogImage[0]?.url || "",
         url: result.requestUrl || url,
       });
     } else {
