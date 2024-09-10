@@ -61,6 +61,7 @@ const MessagePage = () => {
     peerConnection,
     incomingCall,
     joinroom,
+    ogData
   } = useChatLogic();
 
   return (
@@ -68,7 +69,6 @@ const MessagePage = () => {
       style={{backgroundImage: `url(${"https://wallpapercave.com/wp/wp9875549.jpg"})`}}
       className="bg-no-repeat bg-cover"
     >
-      
       <Header
         joinroom={joinroom}
         startCall={startCall}
@@ -103,6 +103,7 @@ const MessagePage = () => {
           user={user}
           handleDeleteText={handleDeleteText}
           handleEditText={handleEditText}
+          loading={loading}
         />
 
         {/**upload Image display */}
@@ -171,6 +172,8 @@ const MessagePage = () => {
                 isRecording={isRecording}
                 startRecording={startRecording}
                 stopRecording={stopRecording}
+                ogData={ogData}
+                loading={loading}
               />
             </>
           )}

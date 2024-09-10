@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AgoraRTC from "agora-rtc-react";
-import { MdCallEnd, MdVideocamOff, MdVideocam, MdMicOff, MdMic } from "react-icons/md";
+import { MdCallEnd,} from "react-icons/md";
 
 const client = AgoraRTC.createClient({
   mode: "rtc",

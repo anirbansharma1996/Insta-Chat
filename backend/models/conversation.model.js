@@ -2,7 +2,7 @@ const { Schema, model, default: mongoose } = require("mongoose");
 
 const MessageSchema = new Schema(
   {
-    originalText:{
+    originalText: {
       type: String,
       default: "",
     },
@@ -52,6 +52,10 @@ const MessageSchema = new Schema(
       type: mongoose.Schema.ObjectId,
       required: true,
       ref: "users",
+    },
+    ogData: {
+      type: Object,
+      default: {},
     },
   },
   { timestamps: true }

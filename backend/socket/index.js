@@ -5,6 +5,7 @@ const UserModel = require("../models/user.model.js");
 const { Server } = require("socket.io");
 const express = require("express");
 const http = require("http");
+const fetchOGData = require("../helpers/ogLink.js");
 
 const app = express();
 
@@ -103,6 +104,15 @@ io.on("connection", async (socket) => {
       conversation = await createConversation.save();
     }
 
+    // Check if message contains a URL
+    let ogData = null;
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const urlMatch = data?.text?.match(urlPattern);
+
+    if (urlMatch) {
+      ogData = await fetchOGData(urlMatch[0]);
+    }
+
     const message = new Message({
       originalText: data.text,
       text: data.text,
@@ -110,8 +120,16 @@ io.on("connection", async (socket) => {
       audioUrl: data.audioUrl,
       videoUrl: data.videoUrl,
       replyTo: data.replyTo,
-      msgByUserId: data?.msgByUserId,
-      rcvByUserId: data?.rcvByUserId,
+      msgByUserId: data.msgByUserId,
+      rcvByUserId: data.rcvByUserId,
+      ogData: ogData
+        ? {
+            title: ogData.ogTitle,
+            description: ogData.ogDescription,
+            image: ogData.ogImage[0]?.url,
+            url: ogData.ogUrl,
+          }
+        : null,
     });
 
     const saveMessage = await message.save();
@@ -240,6 +258,16 @@ io.on("connection", async (socket) => {
   // Update message data
   socket.on("update-message", async (data) => {
     const { messageId, newText, newImageUrl } = data;
+
+    // Check if message contains a URL
+    let ogData = null;
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const urlMatch = newText?.match(urlPattern);
+
+    if (urlMatch) {
+      ogData = await fetchOGData(urlMatch[0]);
+    }
+
     try {
       const updatedMessage = await Message.findByIdAndUpdate(
         messageId,
@@ -247,6 +275,14 @@ io.on("connection", async (socket) => {
           $set: {
             text: newText,
             imageUrl: newImageUrl,
+            ogData: ogData
+              ? {
+                  title: ogData.ogTitle,
+                  description: ogData.ogDescription,
+                  image: ogData.ogImage[0]?.url,
+                  url: ogData.ogUrl,
+                }
+              : null,
             isEdited: true,
           },
         },

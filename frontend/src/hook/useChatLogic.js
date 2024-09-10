@@ -22,7 +22,9 @@ const messageState = {
 
 const useChatLogic = () => {
   const params = useParams();
-  const socketConnection = useSelector((state) => state?.user?.socketConnection);
+  const socketConnection = useSelector(
+    (state) => state?.user?.socketConnection
+  );
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState(inititalState);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
@@ -50,6 +52,35 @@ const useChatLogic = () => {
   const [joinroom, setJoinRoom] = useState("");
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const [ogData, setOgData] = useState(null);
+
+  // Regex to detect URLs in the text input
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // while uploading a link
+  useEffect(() => {
+    const foundUrls = message?.text.match(urlRegex);
+    if (foundUrls && foundUrls.length > 0) {
+      fetchOgData(foundUrls[0]);
+    } else {
+      setOgData(null);
+    }
+  }, [message?.text]);
+
+  // Function to fetch OG data from the URL
+  const fetchOgData = async (url) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${REACT_APP_BACKEND_URL}/fetch-og-data?url=${encodeURIComponent(url)}`
+      );
+      setLoading(false);
+      setOgData(response.data);
+    } catch (error) {
+      setLoading(false);
+      console.error("Error fetching OG data:", error);
+      setOgData(null);
+    }
+  };
 
   // open camera modal
   const handleOpenCamera = () => {
@@ -193,7 +224,7 @@ const useChatLogic = () => {
       setCallType("video");
       const newRoomId = uuidv4();
       setJoinRoom(newRoomId);
-      
+
       // Emit socket event to start the call
       socketConnection.emit("outgoing-video-call", {
         from: { _id: user._id },
@@ -201,18 +232,18 @@ const useChatLogic = () => {
         roomId: newRoomId,
         callType: "video",
       });
-      window.location.href =(`/via/${newRoomId}`);
-      
+      window.location.href = `/via/${newRoomId}`;
+
       setIsVideoCallActive(true);
     } catch (error) {
       console.error("Error starting the call:", error); // Log any unexpected errors
     }
   };
-  
+
   const acceptCall = () => {
-    window.location.href =(`/via/${incomingCall.roomId}`);
+    window.location.href = `/via/${incomingCall.roomId}`;
   };
-  
+
   const rejectCall = () => {
     socketConnection.emit("reject-video-call", { from: incomingCall.from });
     setCallRejected(true);
@@ -233,16 +264,40 @@ const useChatLogic = () => {
       socketConnection.emit("delivered", params.userId);
       socketConnection.emit("message-page", params.userId);
       socketConnection.emit("seen", params.userId);
-      socketConnection.on("message-user", (data) => {setDataUser(data)});
-      socketConnection.on("message", (data) => {setAllMessage(data)});
-      socketConnection.on("display", (data) => {setIsTyping(data.typing ? true : false)});
-      socketConnection.on("block-success", ({ message }) => {if (message) window.location.reload()});
-      socketConnection.on("unblock-success", ({ message }) => {if (message) window.location.reload()});
-      // video call 
-      socketConnection.on("incoming-video-call",({ to, from, roomId, callType }) => {setIncomingCall({ to, from, roomId, callType })});
-      socketConnection.on("accept-call", ({ roomId }) => {setCallAccepted(true);setJoinRoom(roomId)});
-      socketConnection.on("video-call-rejected", (data) => {setCallRejected(data);endCall()});
-      socketConnection.on("room-joined", ({ roomId }) => {setJoinRoom(roomId);setCallAccepted(true)});
+      socketConnection.on("message-user", (data) => {
+        setDataUser(data);
+      });
+      socketConnection.on("message", (data) => {
+        setAllMessage(data);
+      });
+      socketConnection.on("display", (data) => {
+        setIsTyping(data.typing ? true : false);
+      });
+      socketConnection.on("block-success", ({ message }) => {
+        if (message) window.location.reload();
+      });
+      socketConnection.on("unblock-success", ({ message }) => {
+        if (message) window.location.reload();
+      });
+      // video call
+      socketConnection.on(
+        "incoming-video-call",
+        ({ to, from, roomId, callType }) => {
+          setIncomingCall({ to, from, roomId, callType });
+        }
+      );
+      socketConnection.on("accept-call", ({ roomId }) => {
+        setCallAccepted(true);
+        setJoinRoom(roomId);
+      });
+      socketConnection.on("video-call-rejected", (data) => {
+        setCallRejected(data);
+        endCall();
+      });
+      socketConnection.on("room-joined", ({ roomId }) => {
+        setJoinRoom(roomId);
+        setCallAccepted(true);
+      });
     }
   }, [socketConnection, params?.userId, joinroom, user]);
 
@@ -497,6 +552,7 @@ const useChatLogic = () => {
     endCall,
     incomingCall,
     joinroom,
+    ogData,
   };
 };
 

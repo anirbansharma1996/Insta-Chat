@@ -9,6 +9,7 @@ const searchUser = require("../controllers/searchUser.js");
 const { GetOutPut } = require("../controllers/geminiReply.js");
 const multer = require("multer");
 const {uploadImage , uploadVideo,uploadAudio} = require("../controllers/uploadImage.js");
+const urlEncoded = require("../controllers/ogLink.js");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -26,5 +27,6 @@ router.post("/prompt", GetOutPut);
 router.post("/image-upload", upload.single("image"), uploadImage);
 router.post("/video-upload", upload.single("video"), uploadVideo);
 router.post("/audio-upload", upload.single("audio"), uploadAudio);
+router.post("/fetch-og-data", urlEncoded),
 
 module.exports = router;
