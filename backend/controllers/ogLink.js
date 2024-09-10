@@ -8,14 +8,13 @@ const urlEncoded = async (req, res) => {
   try {
     const options = { url };
     const { result } = await ogs(options);
-  
-    console.log(result.ogImage[0])
+
 
     if (result.success) {
       res.json({
         title: result.ogTitle || "",
         description: result.ogDescription || "",
-        image: result?.ogImage[0]?.url || "",
+        image: result?.ogImage?.length ? result.ogImage[0].url : "",
         url: result.requestUrl || url,
       });
     } else {
