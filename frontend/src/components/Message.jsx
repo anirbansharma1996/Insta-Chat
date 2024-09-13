@@ -63,7 +63,9 @@ const MessagePage = () => {
     joinroom,
     ogData,
     formatDate,
-    groupedMessages
+    groupedMessages,
+    emojis,
+    handleReact
   } = useChatLogic();
 
   return (
@@ -108,6 +110,8 @@ const MessagePage = () => {
           loading={loading}
           formatDate={formatDate}
           groupedMessages={groupedMessages}
+          handleReact={handleReact}
+          emojis={emojis}
         />
 
         {/**upload Image display */}

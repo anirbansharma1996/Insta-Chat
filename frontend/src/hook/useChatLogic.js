@@ -258,6 +258,13 @@ const useChatLogic = () => {
     setIsCalling(false);
   };
 
+  // react to a text 
+  const emojis = ["👍", "❤️", "😂", "😍", "😢", "😡", "🙏"];
+
+  const handleReact = (messageId, emoji) => {
+    socketConnection.emit("reactToMessage", { messageId, emoji });
+  };
+
   // on mounting this socket connection function will run
   useEffect(() => {
     if (socketConnection) {
@@ -570,7 +577,9 @@ const useChatLogic = () => {
     joinroom,
     ogData,
     formatDate,
-    groupedMessages
+    groupedMessages,
+    handleReact,
+    emojis
   };
 };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import moment from "moment";
 import {
   MdDone,
@@ -8,12 +8,11 @@ import {
 } from "react-icons/md";
 import { IoCheckmarkDone } from "react-icons/io5";
 import Loading from "../Loading";
-import DateSeparator from "./DateSeparator"; 
+import DateSeparator from "./DateSeparator";
 
 const Conversation = ({
   handleEditText,
   handleDeleteText,
-  allMessage,
   currentMessage,
   handleEditDeleteMessage,
   activeMessageId,
@@ -22,10 +21,10 @@ const Conversation = ({
   user,
   loading,
   formatDate,
-  groupedMessages
+  groupedMessages,
+  handleReact,
+  emojis,
 }) => {
- 
-
   return (
     <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
       {loading ? (
@@ -47,7 +46,19 @@ const Conversation = ({
                 {/* Edit and delete message */}
                 {activeMessageId === msg._id && !msg?.isDeleted && (
                   <div className="bg-white rounded mb-1 right-5 bottom-20 w-36 p-2 ease-in">
-                    <form>
+                    <div>
+                      <div className="flex flex-wrap gap-1">
+                        {dataUser?._id == msg.msgByUserId &&
+                          emojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              className="text-md bg-white"
+                              onClick={() => handleReact(msg._id, emoji)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                      </div>
                       <label
                         onClick={() => handleReply(msg)}
                         className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
@@ -82,7 +93,7 @@ const Conversation = ({
                           <p>Delete</p>
                         </label>
                       )}
-                    </form>
+                    </div>
                   </div>
                 )}
                 <div className="w-full relative">
@@ -149,7 +160,7 @@ const Conversation = ({
                         />
                       )}
                     </div>
-                    <p className="text-base">{msg?.text}</p>
+                    <p className="text-base ">{msg?.text}</p>
                   </>
                 ) : msg?.ogData ? (
                   <>
@@ -183,9 +194,19 @@ const Conversation = ({
                     >
                       {msg.ogData.url}
                     </a>
+                    <p className="flex px-2 text-base relative">
+                      <span className="absolute -bottom-9 right-0">
+                        {msg?.reaction}
+                      </span>{" "}
+                    </p>
                   </>
                 ) : (
-                  <p className="flex px-2 text-base">{msg.text}</p>
+                  <p className="flex px-2 text-base relative">
+                    {msg.text}
+                    <span className="absolute -bottom-10 right-0">
+                      {msg?.reaction}
+                    </span>
+                  </p>
                 )}
                 {!msg?.isDeleted && (
                   <div className="flex items-center">

@@ -116,6 +116,7 @@ io.on("connection", async (socket) => {
     const message = new Message({
       originalText: data.text,
       text: data.text,
+      reaction: data.reaction,
       imageUrl: data.imageUrl,
       audioUrl: data.audioUrl,
       videoUrl: data.videoUrl,
@@ -168,6 +169,52 @@ io.on("connection", async (socket) => {
 
     io.to(data?.sender).emit("conversation", conversationSender);
     io.to(data?.receiver).emit("conversation", conversationReceiver);
+  });
+
+  //message reaction
+  socket.on("reactToMessage", async ({ messageId, emoji }) => {
+    try {
+      const message = await Message.findById(messageId);
+     
+      if (!message) {
+        return socket.emit("reactionError", { error: "Message not found" });
+      }
+
+      const messageReact = await Message.findByIdAndUpdate(
+        messageId,
+        {
+          $set: {
+            reaction: emoji,
+          },
+        },
+        { new: true }
+      );
+
+      //console.log(messageReact)
+
+      if (messageReact ) {
+         const conversation =  await Conversation.findOne({
+          messages: messageId,
+        }).populate("messages");
+
+        io.to(messageReact.msgByUserId.toString()).emit(
+          "message",
+          conversation.messages
+        );
+
+
+        const otherUser =
+          conversation.sender.toString() ===
+          messageReact.msgByUserId.toString()
+            ? conversation.receiver
+            : conversation.sender;
+      
+        io.to(otherUser.toString()).emit("message", conversation.messages);
+        socket.emit("update-success", { messageId });
+      }
+    } catch (error) {
+      socket.emit("reactionError", { error: "Server error" });
+    }
   });
 
   // block/unblock users
