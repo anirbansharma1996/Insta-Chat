@@ -18,29 +18,29 @@ const ReplyingMessage = ({
             </p>
           </div>
         )}
-        {replyingMessage?.imageUrl && (
+        {replyingMessage?.media?.imageUrl && (
           <>
             <h5>Replying to : &nbsp;</h5>
             <img
               className="w-24"
-              src={replyingMessage?.imageUrl}
+              src={replyingMessage?.media?.imageUrl}
               alt={replyingMessage._id}
             />
           </>
         )}
-        {replyingMessage?.audioUrl && (
+        {replyingMessage?.media?.audioUrl && (
           <audio
             className="w-60 p-1"
             controls
-            src={replyingMessage?.audioUrl}
+            src={replyingMessage?.media?.audioUrl}
           />
         )}
-        {replyingMessage?.videoUrl && (
+        {replyingMessage?.media?.videoUrl && (
           <video
             className="w-60 p-1"
             controls
             autoPlay
-            src={replyingMessage?.videoUrl}
+            src={replyingMessage?.media?.videoUrl}
           />
         )}
       </div>

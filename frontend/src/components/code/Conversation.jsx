@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import moment from "moment";
 import {
   MdDone,
@@ -9,6 +9,7 @@ import {
 import { IoCheckmarkDone } from "react-icons/io5";
 import Loading from "../Loading";
 import DateSeparator from "./DateSeparator";
+import { useSelector } from "react-redux";
 
 const Conversation = ({
   handleEditText,
@@ -25,8 +26,49 @@ const Conversation = ({
   handleReact,
   emojis,
 }) => {
+  const socket = useSelector((state) => state?.user?.socketConnection);
+
+  const handleDeleteTextForMe = (u_id, m_id) => {
+    socket.emit("delete-user-messages", { userId: u_id, messageId: m_id });
+  };
+
+  // useEffect(() => {
+  //   if (socket) {
+  //     socket.on("conversation", (data) => {
+  //       const conversationUserData = data.map((conversationUser) => {
+  //         if (
+  //           conversationUser?.sender?._id === conversationUser?.receiver?._id
+  //         ) {
+  //           return {
+  //             ...conversationUser,
+  //             userDetails: conversationUser?.sender,
+  //           };
+  //         } else if (conversationUser?.receiver?._id !== user?._id) {
+  //           return {
+  //             ...conversationUser,
+  //             userDetails: conversationUser.receiver,
+  //           };
+  //         } else {
+  //           return {
+  //             ...conversationUser,
+  //             userDetails: conversationUser.sender,
+  //           };
+  //         }
+  //       });
+  //       setConvo(conversationUserData);
+  //     });
+  //   }
+  // }, [socket, user]);
+
+  //console.log(convo);
+  //const response = convo?.map((el) => el.deletedFor);
+  //console.log(response);
+
   return (
-    <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
+    <div
+      className="flex flex-col gap-2 py-2 mx-2"
+      ref={currentMessage}
+    >
       {loading ? (
         <Loading />
       ) : (
@@ -44,80 +86,107 @@ const Conversation = ({
                 } cursor-pointer`}
               >
                 {/* Edit and delete message */}
-                {activeMessageId === msg._id && !msg?.isDeleted && (
-                  <div className="bg-white rounded mb-1 right-5 bottom-20 w-36 p-2 ease-in">
-                    <div>
-                      <div className="flex flex-wrap gap-1">
-                        {dataUser?._id == msg.msgByUserId &&
-                          emojis.map((emoji) => (
-                            <button
-                              key={emoji}
-                              className="text-md bg-white"
-                              onClick={() => handleReact(msg._id, emoji)}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                      </div>
-                      <label
-                        onClick={() => handleReply(msg)}
-                        className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                      >
-                        <div className="text-primary">
-                          <MdOutlineReply size={20} />
+                {activeMessageId === msg._id &&
+                  !msg?.isDeleted &&
+                  !msg.deletedFor.includes(user._id) && (
+                    <div className="bg-white rounded mb-1 right-5 bottom-20 w-36 p-2 ease-in">
+                      <div>
+                        <div className="flex flex-wrap gap-1">
+                          {dataUser?._id == msg.msgByUserId &&
+                            emojis.map((emoji) => (
+                              <button
+                                key={emoji}
+                                className="text-md bg-white"
+                                onClick={() => handleReact(msg._id, emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
                         </div>
-                        <p>Reply</p>
-                      </label>
-                      {dataUser?._id !== msg.msgByUserId &&
-                        !msg.imageUrl &&
-                        !msg.audioUrl &&
-                        !msg.videoUrl && (
-                          <label
-                            onClick={() => handleEditText(msg)}
-                            className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
-                          >
-                            <div className="text-primary">
-                              <MdModeEditOutline size={20} />
-                            </div>
-                            <p>Edit </p>
-                          </label>
-                        )}
-                      {dataUser?._id !== msg.msgByUserId && (
                         <label
-                          onClick={() => handleDeleteText(msg._id)}
+                          onClick={() => handleReply(msg)}
                           className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
                         >
                           <div className="text-primary">
-                            <MdDeleteOutline size={20} />
+                            <MdOutlineReply size={20} />
                           </div>
-                          <p>Delete</p>
+                          <p>Reply</p>
                         </label>
-                      )}
+                        {dataUser?._id !== msg.msgByUserId &&
+                          !msg?.media?.imageUrl &&
+                          !msg?.media?.audioUrl &&
+                          !msg?.media?.videoUrl && (
+                            <label
+                              onClick={() => handleEditText(msg)}
+                              className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                            >
+                              <div className="text-primary">
+                                <MdModeEditOutline size={20} />
+                              </div>
+                              <p>Edit </p>
+                            </label>
+                          )}
+                        {dataUser?._id !== msg.msgByUserId && (
+                          <label
+                            onClick={() => handleDeleteText(msg._id)}
+                            className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                          >
+                            <div className="text-primary">
+                              <MdDeleteOutline size={20} />
+                            </div>
+                            <p> Everyone</p>
+                          </label>
+                        )}
+                        {dataUser?._id !== msg.msgByUserId && (
+                          <label
+                            onClick={() =>
+                              handleDeleteTextForMe(user._id, msg._id)
+                            }
+                            className="flex items-center p-2 px-3 gap-3 hover:bg-slate-200 cursor-pointer"
+                          >
+                            <div className="text-primary">
+                              <MdDeleteOutline size={20} />
+                            </div>
+                            <p>Me</p>
+                          </label>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 <div className="w-full relative">
-                  {msg?.imageUrl && !msg?.isDeleted && (
-                    <img
-                      src={!msg?.isDeleted && msg?.imageUrl}
-                      className="w-full h-full object-scale-down"
-                      alt="Message"
-                    />
-                  )}
-                  {msg?.videoUrl && !msg?.isDeleted && (
-                    <video
-                      controls
-                      autoPlay
-                      src={!msg?.isDeleted && msg?.videoUrl}
-                      className="w-full h-full object-scale-down"
-                      alt="Message"
-                    />
-                  )}
+                  {msg?.media?.imageUrl &&
+                    !msg?.isDeleted &&
+                    !msg.deletedFor.includes(user._id) && (
+                      <img
+                        src={
+                          !msg?.isDeleted &&
+                          !msg.deletedFor.includes(user._id) &&
+                          msg?.media?.imageUrl
+                        }
+                        className="w-full h-full object-scale-down"
+                        alt="Message"
+                      />
+                    )}
+                  {msg?.media?.videoUrl &&
+                    !msg.deletedFor.includes(user._id) &&
+                    !msg?.isDeleted && (
+                      <video
+                        controls
+                        autoPlay
+                        src={
+                          !msg?.isDeleted &&
+                          !msg.deletedFor.includes(user._id) &&
+                          msg?.media?.videoUrl
+                        }
+                        className="w-full h-full object-scale-down"
+                        alt="Message"
+                      />
+                    )}
                 </div>
                 <div className="w-full relative">
-                  {!msg?.isDeleted && msg?.audioUrl && (
+                  {!msg?.isDeleted && msg?.media?.audioUrl && (
                     <audio
-                      src={!msg?.isDeleted && msg?.audioUrl}
+                      src={!msg?.isDeleted && msg?.media?.audioUrl}
                       controls
                       className="w-60 mb-3"
                     />
@@ -136,31 +205,31 @@ const Conversation = ({
                           {msg?.replyTo?.text}
                         </p>
                       )}
-                      {msg?.replyTo?.imageUrl && (
+                      {msg?.replyTo?.media?.imageUrl && (
                         <img
                           className="mt-1 w-36"
-                          src={msg?.replyTo?.imageUrl}
+                          src={msg?.replyTo?.media?.imageUrl}
                           alt={msg.replyTo._id}
                         />
                       )}
-                      {msg?.replyTo?.videoUrl && (
+                      {msg?.replyTo?.media?.videoUrl && (
                         <video
                           controls
                           autoPlay
                           className="mt-1 w-36"
-                          src={msg?.replyTo?.videoUrl}
+                          src={msg?.replyTo?.media?.videoUrl}
                           alt={msg.replyTo._id}
                         />
                       )}
-                      {msg?.replyTo?.audioUrl && (
+                      {msg?.replyTo?.media?.audioUrl && (
                         <audio
                           className="w-60 mt-1"
                           controls
-                          src={msg?.replyTo?.audioUrl}
+                          src={msg?.replyTo?.media?.audioUrl}
                         />
                       )}
                     </div>
-                    <p className="text-base ">{msg?.text}</p>
+                    <p className="text-base">{msg?.text}</p>
                   </>
                 ) : msg?.ogData ? (
                   <>
@@ -202,28 +271,36 @@ const Conversation = ({
                   </>
                 ) : (
                   <p className="flex px-2 text-base relative">
-                    {msg.text}
+                    {!msg.deletedFor.includes(user._id) ? (
+                      msg.text
+                    ) : (
+                      <span className="text-gray-400 text-sm">
+                        this message hasbeen deleted by you ...
+                      </span>
+                    )}
                     <span className="absolute -bottom-10 right-0">
                       {msg?.reaction}
                     </span>
                   </p>
                 )}
-                {!msg?.isDeleted && (
+                {!msg.deletedFor.includes(user._id) && !msg?.isDeleted && (
                   <div className="flex items-center">
                     <p className="text-xs ml-auto w-fit">
                       {msg.isEdited && "Edited"} &nbsp;
-                      {moment(msg.createdAt).format("hh:mm A")}
+                      {!msg.deletedFor.includes(user._id) &&
+                        moment(msg.createdAt).format("hh:mm A")}
                     </p>
                     &nbsp;
-                    {user._id === msg?.msgByUserId && (
-                      <p className="text-xs">
-                        {msg.seen ? (
-                          <IoCheckmarkDone className="text-blue-600" />
-                        ) : (
-                          <MdDone />
-                        )}
-                      </p>
-                    )}
+                    {user._id === msg?.msgByUserId &&
+                      !msg.deletedFor.includes(user._id) && (
+                        <p className="text-xs">
+                          {msg.seen ? (
+                            <IoCheckmarkDone className="text-blue-600" />
+                          ) : (
+                            <MdDone />
+                          )}
+                        </p>
+                      )}
                   </div>
                 )}
               </div>

@@ -258,26 +258,33 @@ const useChatLogic = () => {
     setIsCalling(false);
   };
 
-  // react to a text 
+  // react to a text
   const emojis = ["👍", "❤️", "😂", "😍", "😢", "😡", "🙏"];
 
   const handleReact = (messageId, emoji) => {
     socketConnection.emit("reactToMessage", { messageId, emoji });
   };
 
+  // const [pageNumber, setPageNumber] = useState(1);
+  // const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   // on mounting this socket connection function will run
+  
   useEffect(() => {
     if (socketConnection) {
-      // message
       socketConnection.emit("delivered", params.userId);
-      socketConnection.emit("message-page", params.userId);
+      const data = { userId: params.userId, pageNumber: 1 , pageSize: 4};
+      socketConnection.emit("message-page", data);
       socketConnection.emit("seen", params.userId);
       socketConnection.on("message-user", (data) => {
         setDataUser(data);
       });
       socketConnection.on("message", (data) => {
-        setAllMessage(data);
-        setLoading(data ? false : true);
+        if (pageNumber === 1) {
+          setAllMessage(data);
+        } else {
+          setAllMessage((prevMessages) => [...prevMessages, ...data]);
+        }
+        setLoadingMoreMessages(false);
       });
       socketConnection.on("display", (data) => {
         setIsTyping(data.typing ? true : false);
@@ -308,7 +315,32 @@ const useChatLogic = () => {
         setCallAccepted(true);
       });
     }
+    // Scroll event listener to detect when user is near the bottom of the chat
+    // const chatContainer = document.getElementById("chat-container"); // Replace with your chat container ID
+    // const handleScroll = () => {
+    //   console.log(chatContainer)
+    //   if ( chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 10) {
+    //     loadMoreMessages();
+    //   }
+    // };
+    // chatContainer?.addEventListener("scroll", handleScroll);
+    // return () => {
+    //   chatContainer?.removeEventListener("scroll", handleScroll);
+    // };
   }, [socketConnection, params?.userId, joinroom, user]);
+  // // Function to load more messages
+  // const loadMoreMessages = () => {
+  //   if (!loadingMoreMessages) {
+  //     setLoadingMoreMessages(true);
+  //     setPageNumber((prevPage) => prevPage + 1);
+  //     const data = {
+  //       userId: params.userId,
+  //       pageNumber: pageNumber + 1,
+  //       pageSize: 4,
+  //     };
+  //     socketConnection.emit("message-page", data);
+  //   }
+  // };
 
   // input taking
   const handleOnChange = (e) => {
@@ -510,19 +542,18 @@ const useChatLogic = () => {
     }
   };
 
+  // Function to format date for the separator
+  const formatDate = (date) => moment(date).format("MMMM D, YYYY");
 
-   // Function to format date for the separator
-   const formatDate = (date) => moment(date).format("MMMM D, YYYY");
-
-   // Group messages by date
-   const groupedMessages = allMessage.reduce((acc, msg) => {
-     const date = moment(msg.createdAt).startOf('day').format('YYYY-MM-DD');
-     if (!acc[date]) {
-       acc[date] = [];
-     }
-     acc[date].push(msg);
-     return acc;
-   }, {});
+  // Group messages by date
+  const groupedMessages = allMessage.reduce((acc, msg) => {
+    const date = moment(msg.createdAt).startOf("day").format("YYYY-MM-DD");
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(msg);
+    return acc;
+  }, {});
 
   return {
     user,
@@ -579,7 +610,7 @@ const useChatLogic = () => {
     formatDate,
     groupedMessages,
     handleReact,
-    emojis
+    emojis,
   };
 };
 

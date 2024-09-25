@@ -96,7 +96,7 @@ const MessagePage = () => {
         incomingCall={incomingCall}
       />
       {/***show all message */}
-      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50">
+      <section id="chat-container" className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50">
         <Conversation
           allMessage={allMessage}
           currentMessage={currentMessage}

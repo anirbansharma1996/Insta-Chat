@@ -1,5 +1,6 @@
 const { Schema, model, default: mongoose } = require("mongoose");
 
+// Message Schema
 const MessageSchema = new Schema(
   {
     originalText: {
@@ -9,18 +10,13 @@ const MessageSchema = new Schema(
     text: {
       type: String,
       default: "",
+      gen:"plain"
     },
-    imageUrl: {
-      type: String,
-      default: "",
-    },
-    videoUrl: {
-      type: String,
-      default: "",
-    },
-    audioUrl: {
-      type: String,
-      default: "",
+    media: {
+      imageUrl: {String},
+      audioUrl: String,
+      videoUrl: String,
+      
     },
     reaction: {
       type: String,
@@ -42,6 +38,12 @@ const MessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    deletedFor: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "users",
+      },
+    ],
     replyTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "messages",
@@ -65,7 +67,8 @@ const MessageSchema = new Schema(
   { timestamps: true }
 );
 
-const ConvserSationSchema = new Schema(
+// Conversation Schema
+const ConversationSchema = new Schema(
   {
     sender: {
       type: mongoose.Schema.ObjectId,
@@ -83,11 +86,18 @@ const ConvserSationSchema = new Schema(
         ref: "messages",
       },
     ],
+    deletedBy: [
+      {
+        userId: { type: mongoose.Schema.ObjectId, ref: "users" },
+        deletedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
+// Models
 const Message = new model("messages", MessageSchema);
-const Conversation = new model("conversation", ConvserSationSchema);
+const Conversation = new model("conversations", ConversationSchema);
 
 module.exports = { Message, Conversation };

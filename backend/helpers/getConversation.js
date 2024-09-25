@@ -26,10 +26,10 @@ const getConversation = async (currentUserId) => {
         sender: conv?.sender,
         receiver: conv?.receiver,
         unseenMsg: countUnseenMsg,
-        lastMsg: conv.messages[conv?.messages?.length - 1],
+        lastMsg: conv?.messages[conv?.messages?.length - 1],
+        deletedFor : conv?.deletedBy
       };
     });
-
     return conversation;
   } else {
     return [];

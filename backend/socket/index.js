@@ -38,36 +38,48 @@ io.on("connection", async (socket) => {
   blockedBy_users?.forEach((userId) => blockedBy.add(userId));
 
   io.emit("onlineUser", Array.from(onlineUser));
-
-  socket.on("message-page", async (userId) => {
-    const userDetails = await UserModel.findById(userId).select("-password");
-    const payload = {
-      _id: userDetails?._id,
-      name: userDetails?.name,
-      email: userDetails?.email,
-      profile_pic: userDetails?.profile_pic,
-      online: onlineUser.has(userId),
-    };
-    socket.emit("message-user", payload);
-
-    // Get previous messages
-    const getConversationMessage = await Conversation.findOne({
-      $or: [
-        { sender: user?._id, receiver: userId },
-        { sender: userId, receiver: user?._id },
-      ],
-    })
-      .populate({
-        path: "messages",
-        populate: {
-          path: "replyTo",
-          model: "messages",
-          options: { lean: true },
-        },
+  socket.on(
+    "message-page",
+    async ({ userId, pageNumber = 1, pageSize = 2 }) => {
+      const userDetails = await UserModel.findById(userId).select("-password");
+      const payload = {
+        _id: userDetails?._id,
+        name: userDetails?.name,
+        email: userDetails?.email,
+        profile_pic: userDetails?.profile_pic,
+        online: onlineUser.has(userId),
+      };
+      socket.emit("message-user", payload);
+      // calculate the message to skip
+      const skipMessage = (pageNumber - 1) * pageSize;
+      // Get previous messages
+      const getConversationMessage = await Conversation.findOne({
+        $or: [
+          { sender: user?._id, receiver: userId },
+          { sender: userId, receiver: user?._id },
+        ],
       })
-      .sort({ updatedAt: -1 });
-    socket.emit("message", getConversationMessage?.messages || []);
-  });
+        .populate({
+          path: "messages",
+          options: {
+            skip: skipMessage,
+            limit: pageSize,
+          },
+          populate: {
+            path: "replyTo",
+            model: "messages",
+            options: { lean: true },
+          },
+        })
+        .sort({ updatedAt: -1 });
+      // If the conversation exists and is marked as deleted for the current user, hide previous messages
+      if (getConversationMessage?.deletedFor?.includes(user?._id)) {
+        socket.emit("message", []); //Do not send previous messages if the conversation is marked as deleted for this user,Send an empty array
+      } else {
+        socket.emit("message", getConversationMessage?.messages || []); // Send the messages if the conversation is not deleted for the user
+      }
+    }
+  );
 
   // typing
   socket.on("typing", async (data) => {
@@ -75,20 +87,58 @@ io.on("connection", async (socket) => {
   });
 
   // New message
+  // Store user rate-limiting data in memory
+  const rateLimitMap = {};
+  // Rate-limiting configuration
+  const MAX_MESSAGES = 2; // Max 2 messages
+  const TIME_FRAME = 1 * 1000; // 1 seconds
+  //--------------------------
   socket.on("new message", async (data) => {
+    const userId = data.sender;
+    const { page = 1, limit = 20 } = data;
+    if (!rateLimitMap[userId]) {
+      rateLimitMap[userId] = {
+        messageCount: 1,
+        firstMessageTimestamp: Date.now(),
+      };
+    } else {
+      const currentTime = Date.now();
+      const timeDiff = currentTime - rateLimitMap[userId].firstMessageTimestamp;
+
+      // Reset the rate limit counter if the time frame has passed
+      if (timeDiff > TIME_FRAME) {
+        rateLimitMap[userId] = {
+          messageCount: 1,
+          firstMessageTimestamp: currentTime,
+        };
+      } else {
+        // Increment the message count within the time frame
+        rateLimitMap[userId].messageCount += 1;
+        // If message count exceeds the max allowed, block the message
+        if (rateLimitMap[userId].messageCount > MAX_MESSAGES) {
+          socket.emit(
+            "message-blocked",
+            "Rate limit exceeded. Please wait before sending more messages."
+          );
+          return;
+        }
+      }
+    }
     const sender = await UserModel.findById(data.sender).select("-password");
     const receiver = await UserModel.findById(data.receiver).select(
       "-password"
     );
-    // check if the user is block
+
+    // Check if the user is blocked
     if (
-      sender.blockedUsers.includes(data.reciver) ||
+      sender.blockedUsers.includes(data.receiver) ||
       receiver.blockedUsers.includes(data.sender)
     ) {
-      socket.emit("message-blocked", "You cann't send message");
+      socket.emit("message-blocked", "You can't send a message");
       return;
     }
-    // if not blocked start chatting
+
+    // If not blocked, start or find conversation
     let conversation = await Conversation.findOne({
       $or: [
         { sender: data?.sender, receiver: data?.receiver },
@@ -96,30 +146,39 @@ io.on("connection", async (socket) => {
       ],
     });
 
+    // Create new conversation if it doesn't exist
     if (!conversation) {
-      const createConversation = await Conversation({
+      conversation = await new Conversation({
         sender: data?.sender,
         receiver: data?.receiver,
-      });
-      conversation = await createConversation.save();
+      }).save();
     }
 
-    // Check if message contains a URL
+    // Remove 'deletedBy' entry for the user who is sending a new message
+    conversation.deletedBy = conversation.deletedBy.filter(
+      (entry) => entry.userId.toString() !== data.sender
+    );
+    await conversation.save();
+
+    // Check if message contains a URL (for OpenGraph preview)
     let ogData = null;
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     const urlMatch = data?.text?.match(urlPattern);
 
     if (urlMatch) {
-      ogData = await fetchOGData(urlMatch[0]);
+      ogData = await fetchOGData(urlMatch[0]); // You must ensure fetchOGData works correctly
     }
 
+    // Create a new message
     const message = new Message({
-      originalText: data.text,
-      text: data.text,
+      originalText: data.text.trim(),
+      text: data.text.trim(),
       reaction: data.reaction,
-      imageUrl: data.imageUrl,
-      audioUrl: data.audioUrl,
-      videoUrl: data.videoUrl,
+      media: {
+        imageUrl: data.imageUrl,
+        audioUrl: data.audioUrl,
+        videoUrl: data.videoUrl,
+      },
       replyTo: data.replyTo,
       msgByUserId: data.msgByUserId,
       rcvByUserId: data.rcvByUserId,
@@ -133,14 +192,13 @@ io.on("connection", async (socket) => {
         : null,
     });
 
-    const saveMessage = await message.save();
+    const savedMessage = await message.save();
     await Conversation.updateOne(
       { _id: conversation?._id },
-      {
-        $push: { messages: saveMessage?._id },
-      }
+      { $push: { messages: savedMessage?._id } }
     );
 
+    // Fetch updated conversation and filter messages by deleted timestamp
     const getConversationMessage = await Conversation.findOne({
       $or: [
         { sender: data?.sender, receiver: data?.receiver },
@@ -152,18 +210,45 @@ io.on("connection", async (socket) => {
         populate: {
           path: "replyTo",
           model: "messages",
-          options: { lean: true },
+          options: {
+            lean: true,
+            sort: { createdAt: -1 }, // Sort by latest messages
+            skip: (page - 1) * limit, // Skip messages based on the page
+            limit: limit,
+          },
         },
       })
       .sort({ updatedAt: -1 })
       .select("-password");
 
-    io.to(data?.sender).emit("message", getConversationMessage?.messages || []);
-    io.to(data?.receiver).emit(
-      "message",
-      getConversationMessage?.messages || []
+    // Filter messages if the conversation was deleted for either the sender or receiver
+    const deletedForSender = conversation.deletedBy.find(
+      (entry) => entry.userId.toString() === data.sender
+    );
+    const deletedForReceiver = conversation.deletedBy.find(
+      (entry) => entry.userId.toString() === data.receiver
     );
 
+    let filteredMessages = getConversationMessage?.messages || [];
+
+    if (deletedForSender) {
+      filteredMessages = filteredMessages.filter(
+        (msg) => new Date(msg.createdAt) > new Date(deletedForSender.deletedAt)
+      );
+    }
+
+    if (deletedForReceiver) {
+      filteredMessages = filteredMessages.filter(
+        (msg) =>
+          new Date(msg.createdAt) > new Date(deletedForReceiver.deletedAt)
+      );
+    }
+
+    // Send messages to both sender and receiver
+    io.to(data?.sender).emit("message", filteredMessages);
+    io.to(data?.receiver).emit("message", filteredMessages);
+
+    // Update conversation list for both sender and receiver
     const conversationSender = await getConversation(data?.sender);
     const conversationReceiver = await getConversation(data?.receiver);
 
@@ -175,25 +260,16 @@ io.on("connection", async (socket) => {
   socket.on("reactToMessage", async ({ messageId, emoji }) => {
     try {
       const message = await Message.findById(messageId);
-     
       if (!message) {
         return socket.emit("reactionError", { error: "Message not found" });
       }
-
       const messageReact = await Message.findByIdAndUpdate(
         messageId,
-        {
-          $set: {
-            reaction: emoji,
-          },
-        },
+        { $set: { reaction: emoji } },
         { new: true }
       );
-
-      //console.log(messageReact)
-
-      if (messageReact ) {
-         const conversation =  await Conversation.findOne({
+      if (messageReact) {
+        const conversation = await Conversation.findOne({
           messages: messageId,
         }).populate("messages");
 
@@ -202,13 +278,11 @@ io.on("connection", async (socket) => {
           conversation.messages
         );
 
-
         const otherUser =
-          conversation.sender.toString() ===
-          messageReact.msgByUserId.toString()
+          conversation.sender.toString() === messageReact.msgByUserId.toString()
             ? conversation.receiver
             : conversation.sender;
-      
+
         io.to(otherUser.toString()).emit("message", conversation.messages);
         socket.emit("update-success", { messageId });
       }
@@ -365,7 +439,6 @@ io.on("connection", async (socket) => {
       socket.emit("update-failure", { error: error.message });
     }
   });
-
   // delete message data
   socket.on("delete-message", async (data) => {
     const { messageId } = data;
@@ -405,9 +478,69 @@ io.on("connection", async (socket) => {
       socket.emit("delete-failure", { error: error.message });
     }
   });
+  // delete message for a user
+  socket.on("delete-user-messages", async ({ messageId, userId }) => {
+    try {
+      const deletedMessage = await Message.findByIdAndUpdate(
+        messageId,
+        { $addToSet: { deletedFor: userId } },
+        { new: true }
+      );
+      if (deletedMessage) {
+        const conversation = await Conversation.findOne({
+          messages: messageId,
+        }).populate("messages");
+
+        io.to(deletedMessage.msgByUserId.toString()).emit(
+          "message",
+          conversation.messages
+        );
+
+        const otherUser =
+          conversation.sender.toString() ===
+          deletedMessage.msgByUserId.toString()
+            ? conversation.receiver
+            : conversation.sender;
+
+        io.to(otherUser.toString()).emit("message", conversation.messages);
+        socket.emit("delete-success", { messageId });
+      }
+    } catch (error) {
+      socket.emit("delete-messages-failure", { error: error.message });
+    }
+  });
+  // Delete conversation
+  socket.on("delete-conversation", async ({ conversationId, userId }) => {
+    try {
+      const conversation = await Conversation.findById(conversationId);
+      if (conversation) {
+        const existingEntry = conversation.deletedBy.find(
+          (entry) => entry.userId.toString() === userId
+        );
+        if (!existingEntry) {
+          // If not already deleted, add the deletion time for this user
+          conversation.deletedBy.push({ userId, deletedAt: new Date() });
+          await conversation.save();
+        }
+        socket.emit("conversation-deleted", { conversationId, success: true });
+      } else {
+        socket.emit("conversation-deleted", {
+          conversationId,
+          success: false,
+          message: "Conversation not found",
+        });
+      }
+    } catch (error) {
+      // console.log(error);
+      socket.emit("conversation-deleted", {
+        conversationId,
+        success: false,
+        message: "Error deleting conversation",
+      });
+    }
+  });
 
   //------------ Video call signaling ---------------
-
   socket.on("outgoing-video-call", (data) => {
     const sendUserSocket = onlineUser.has(data.to);
     if (sendUserSocket) {
