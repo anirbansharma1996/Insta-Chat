@@ -268,13 +268,13 @@ const Sidebar = () => {
                     )}
                   </NavLink>
 
-                  <MdDeleteOutline
+                  {/* <MdDeleteOutline
                     size={20}
                     className="cursor-pointer hover:text-red-400"
                     onClick={() =>
                       handleChatDelete(conv?._id, conv?.userDetails?._id)
                     }
-                  />
+                  /> */}
                 </div>
               );
             })}

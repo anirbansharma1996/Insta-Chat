@@ -267,8 +267,10 @@ const useChatLogic = () => {
 
   // const [pageNumber, setPageNumber] = useState(1);
   // const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
-  // on mounting this socket connection function will run
+
   
+  // on mounting this socket connection function will run
+ 
   useEffect(() => {
     if (socketConnection) {
       socketConnection.emit("delivered", params.userId);
@@ -279,11 +281,12 @@ const useChatLogic = () => {
         setDataUser(data);
       });
       socketConnection.on("message", (data) => {
-        if (pageNumber === 1) {
-          setAllMessage(data);
-        } else {
-          setAllMessage((prevMessages) => [...prevMessages, ...data]);
-        }
+        setAllMessage(data);
+        // if (pageNumber === 1) {
+        //   setAllMessage(data);
+        // } else {
+        //   setAllMessage((prevMessages) => [...prevMessages, ...data]);
+        // }
         setLoadingMoreMessages(false);
       });
       socketConnection.on("display", (data) => {
